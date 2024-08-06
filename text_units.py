@@ -12,6 +12,7 @@ class TextUnit(ABC):
     def __init__(self, raw_text: str):
         self.__raw_text: str = raw_text
         self.__sub_units: List[TextUnit] = self._parse_sub_units(raw_text=raw_text)
+        self.__separator = ' '
 
     def __str__(self):
         return f"{type(self).__name__}({self.__sub_units if self.__sub_units else self.__raw_text})"
@@ -21,6 +22,9 @@ class TextUnit(ABC):
 
     def get_raw_text(self) -> str:
         return self.__raw_text
+
+    def get_separator(self) -> str:
+        return self.__separator
 
     def get_sub_units(self) -> List['TextUnit']:
         return self.__sub_units
@@ -88,7 +92,7 @@ class TextSentenceUnit(TextUnit):
 
     def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
         split_regex = r'.+?(?:[.,;]|$)'
-        groups = re.findall(split_regex, raw_text)
+        groups = re.findall(split_regex, raw_text, re.MULTILINE)
         groups = list(map(lambda item: item.strip(), groups))
         groups = list(map(lambda item: TextSubSentenceUnit(raw_text=item), groups))
         return groups

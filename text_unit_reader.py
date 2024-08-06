@@ -43,6 +43,9 @@ class TextUnitReader:
         scaled_read_address = self.__scale_read_address(deep_factor=deep_factor)
         targeted_text_unit = self.__text_unit.get_by_address(address=scaled_read_address)
 
+        if not update_address:
+            print(f"scaled_read_address={scaled_read_address}:{targeted_text_unit.get_raw_text() if targeted_text_unit is not None else None}")
+
         if update_address and targeted_text_unit is not None:
             next_read_address = self.__get_next_available_address(address=scaled_read_address)
 
@@ -53,4 +56,4 @@ class TextUnitReader:
                 self.__reading_complete = True
                 pass
 
-        return targeted_text_unit
+        return targeted_text_unit if targeted_text_unit is not None else EmptyUnit()
