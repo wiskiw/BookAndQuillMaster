@@ -31,7 +31,7 @@ class TextContainer(ABC):
         pass
 
     @abstractmethod
-    def get_text(self) -> str:
+    def get_pretty_str(self) -> str:
         pass
 
 
@@ -65,6 +65,9 @@ class McLine(TextContainer):
             return True
         else:
             return False
+
+    def get_pretty_str(self) -> str:
+        return self.__text
 
     def get_text(self) -> str:
         return self.__text
@@ -103,9 +106,17 @@ class McPage(TextContainer):
                 # text not fit even in a new line
                 return False
 
-    def get_text(self) -> str:
-        line_text = map(lambda line: line.get_text(), self.__lines)
-        return '-------- Page --------\n' + '\n'.join(line_text)
+    def get_pretty_str(self) -> str:
+        str_lines = []
+        for enumerated_line in enumerate(self.__lines):
+            index = enumerated_line[0]
+            mc_line = enumerated_line[1]
+            str_lines.append(f"{index}: {mc_line.get_pretty_str()}")
+
+        return '\n'.join(str_lines)
+
+    def get_lines(self) -> list[McLine]:
+        return self.__lines
 
 
 class McBook(TextContainer):
@@ -139,9 +150,17 @@ class McBook(TextContainer):
                 # text not fit even in a new line
                 return False
 
-    def get_text(self) -> str:
-        line_text = map(lambda page: page.get_text(), self.__pages)
-        return '-------- Book --------\n' + '\n'.join(line_text)
+    def get_pretty_str(self) -> str:
+        str_pages = []
+        for enumerated_page in enumerate(self.__pages):
+            index = enumerated_page[0]
+            mc_page = enumerated_page[1]
+            str_pages.append(f" -------- Page {index} -------- \n" + mc_page.get_pretty_str())
+
+        return '\n\n'.join(str_pages)
+
+    def get_pages(self) -> list[McPage]:
+        return self.__pages
 
 
 class TextContainerWriter:
@@ -159,6 +178,8 @@ class TextContainerWriter:
 
             if type(text_unit) is EmptyUnit:
                 # no more units that would fit into this text container
+                text_unit = self.__reader.read_next(deep_factor=deep_factor - 1)
+                print(f"WARNING some text wasn't added: '{text_unit.get_raw_text()}'")
                 break
 
             was_appended = text_container.try_append(text_unit=text_unit)
