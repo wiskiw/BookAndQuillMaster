@@ -10,18 +10,17 @@ class FormatFlag(Enum):
 
 class TextUnit(ABC):
 
-    @abstractmethod
     def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        pass
+        return []
 
     def __init__(self, raw_text: str, format_flags=None):
         if format_flags is None:
             format_flags = []
 
         self.__raw_text: str = raw_text
-        self.__sub_units: List[TextUnit] = self._parse_sub_units(raw_text=raw_text)
         self.__separator = ' '
         self.__format_flags: list[FormatFlag] = format_flags
+        self.__sub_units: List[TextUnit] = self._parse_sub_units(raw_text=raw_text)
 
     def __str__(self):
         return f"{type(self).__name__}({self.__sub_units if self.__sub_units else self.__raw_text})"
@@ -50,8 +49,8 @@ class TextUnit(ABC):
             return self
 
         sub_unit_index = address[0]
-        if sub_unit_index < len(self.__sub_units):
-            sub_unit = self.__sub_units[sub_unit_index]
+        if sub_unit_index < len(self.get_sub_units()):
+            sub_unit = self.get_sub_units()[sub_unit_index]
             return sub_unit.get_by_address(address=address[1:])
         else:
             return None
@@ -59,11 +58,11 @@ class TextUnit(ABC):
     def get_dict(self) -> dict:
         result_dict = {
             'type': type(self).__name__,
-            'raw_text': self.__raw_text,
-            'format_flags': list(map(lambda enum_item: enum_item.value, self.__format_flags)),
+            'raw_text': self.get_raw_text(),
+            'format_flags': list(map(lambda enum_item: enum_item.value, self.get_format_flags())),
         }
 
-        sub_dict_list = list(map(lambda sub_unit: sub_unit.get_dict(), self.__sub_units))
+        sub_dict_list = list(map(lambda sub_unit: sub_unit.get_dict(), self.get_sub_units()))
         if len(sub_dict_list) > 0:
             result_dict['sub_units'] = sub_dict_list
 
@@ -94,20 +93,29 @@ class TextWordUnit(TextUnit):
 
 class TextWordPairUnit(TextUnit):
 
-    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        # no sub text units for Word
-        return []
+    def __init__(self, sub_unit_left: TextUnit, sub_unit_right: TextUnit):
+        pair_text = sub_unit_left.get_raw_text() + sub_unit_right.get_separator() + sub_unit_right.get_raw_text()
+
+        super().__init__(
+            raw_text=pair_text,
+            format_flags=sub_unit_left.get_format_flags(),  # take format flags from the left word only,
+        )
+
+        self.__sub_unit_left = sub_unit_left
+        self.__sub_unit_right = sub_unit_right
+
+    def get_sub_units(self) -> list['TextUnit']:
+        return [self.__sub_unit_left, self.__sub_unit_right]
 
 
 class TextSubSentenceUnit(TextUnit):
 
-    @staticmethod
-    def __mapper(enumerated_item) -> TextWordUnit:
+    def __mapper(self, enumerated_item) -> TextWordUnit:
         index = enumerated_item[0]
         value = enumerated_item[1]
 
         format_flags = []
-        if index == 0:
+        if FormatFlag.PARAGRAPH in self.get_format_flags() and index == 0:
             format_flags.append(FormatFlag.PARAGRAPH)
 
         return TextWordUnit(
@@ -127,10 +135,9 @@ class TextSubSentenceUnit(TextUnit):
             word_right = words[pair_index + 1] if len(words) > pair_index + 1 else None
 
             if len(word_left.get_raw_text()) <= max_satellite_size and word_right is not None:
-                pair_text = word_left.get_raw_text() + word_right.get_separator() + word_right.get_raw_text()
                 pair = TextWordPairUnit(
-                    raw_text=pair_text,
-                    format_flags=word_left.get_format_flags(),  # take format flags from the left word only
+                    sub_unit_left=word_left,
+                    sub_unit_right=word_right,
                 )
                 words_and_word_pairs.append(pair)
                 pair_index = pair_index + 1  # extra index move
@@ -151,13 +158,12 @@ class TextSubSentenceUnit(TextUnit):
 
 class TextSentenceUnit(TextUnit):
 
-    @staticmethod
-    def __mapper(enumerated_item) -> TextUnit:
+    def __mapper(self, enumerated_item) -> TextUnit:
         index = enumerated_item[0]
         value = enumerated_item[1]
 
         format_flags = []
-        if index == 0:
+        if FormatFlag.PARAGRAPH in self.get_format_flags() and index == 0:
             format_flags.append(FormatFlag.PARAGRAPH)
 
         return TextSubSentenceUnit(
@@ -166,7 +172,7 @@ class TextSentenceUnit(TextUnit):
         )
 
     def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        split_regex = r'.+?(?:[.,;]|$)'
+        split_regex = r'[^,:;.]+(?:,|;|\.{3}|.)?'
         sub_sentences = re.findall(split_regex, raw_text, re.MULTILINE)
         sub_sentences = list(map(self.__mapper, enumerate(sub_sentences)))
         return sub_sentences
