@@ -1,5 +1,5 @@
 import re
-from typing import List
+from typing import List, Union
 from abc import ABC, abstractmethod
 
 
@@ -24,6 +24,21 @@ class TextUnit(ABC):
 
     def get_sub_units(self) -> List['TextUnit']:
         return self.__sub_units
+
+    # address = [] - leads to self
+    # address = [0] - leads to first sub-unit
+    # address = [0, 1] - leads to second sub-unit of self sub-unit
+    # if address out or range -> None
+    def get_by_address(self, address: List[int]) -> Union['TextUnit', None]:
+        if len(address) == 0:
+            return self
+
+        sub_unit_index = address[0]
+        if sub_unit_index < len(self.__sub_units):
+            sub_unit = self.__sub_units[sub_unit_index]
+            return sub_unit.get_by_address(address=address[1:])
+        else:
+            return None
 
     def get_dict(self) -> dict:
         result_dict = {
@@ -57,7 +72,7 @@ class TextSubSentenceUnit(TextUnit):
 class TextSentenceUnit(TextUnit):
 
     def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
-        split_regex = r'[^,;]+(?=[,;]|$)'
+        split_regex = r'.+?(?:[.,;]|$)'
         groups = re.findall(split_regex, raw_text)
         groups = list(map(lambda item: item.strip(), groups))
         groups = list(map(lambda item: TextSubSentenceUnit(raw_text=item), groups))
