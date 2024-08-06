@@ -2,7 +2,7 @@ import copy
 from abc import ABC, abstractmethod
 
 from text_unit_reader import TextUnitReader
-from text_units import TextUnit, EmptyUnit
+from text_units import TextUnit, EmptyUnit, FormatFlag
 
 
 class McCharRuler:
@@ -80,11 +80,14 @@ class McPage(TextContainer):
         self.__ruler = ruler
 
     def try_append(self, text_unit: TextUnit) -> bool:
-        if len(self.__lines) > 0:
+        new_line_required = FormatFlag.PARAGRAPH in text_unit.get_format_flags()
+
+        if not new_line_required and len(self.__lines) > 0:
+            # attempt to append to the last existing line
             last_line = self.__lines[len(self.__lines) - 1]
 
             if last_line.try_append(text_unit):
-                # text unit fits into the last existing  line
+                # text unit fits into the last existing line
                 return True
 
         if len(self.__lines) <= self.__max__line_number:
