@@ -76,7 +76,7 @@ class McPage(TextContainer):
         super().__init__()
 
         self.__lines: list[McLine] = []
-        self.__max__line_number = 14
+        self.__max_line_number = 14
         self.__ruler = ruler
 
     def try_append(self, text_unit: TextUnit) -> bool:
@@ -90,14 +90,13 @@ class McPage(TextContainer):
                 # text unit fits into the last existing line
                 return True
 
-        if len(self.__lines) <= self.__max__line_number:
-            # page not full, adding a new line
+        if len(self.__lines) <= self.__max_line_number:
+            # page is not full, adding a new line
             new_line = McLine(ruler=self.__ruler)
 
             if new_line.try_append(text_unit):
                 # text was added into the new line
                 # adding line to the page
-                # self.__current_line_index = self.__current_line_index + 1
                 self.__lines.append(new_line)
                 return True
             else:
@@ -106,7 +105,43 @@ class McPage(TextContainer):
 
     def get_text(self) -> str:
         line_text = map(lambda line: line.get_text(), self.__lines)
-        return '\n'.join(line_text)
+        return '-------- Page --------\n' + '\n'.join(line_text)
+
+
+class McBook(TextContainer):
+
+    def __init__(self, ruler: McCharRuler):
+        super().__init__()
+
+        self.__pages: list[McPage] = []
+        self.__max_page_number = 100
+        self.__ruler = ruler
+
+    def try_append(self, text_unit: TextUnit) -> bool:
+        if len(self.__pages) > 0:
+            # attempt to append to the last existing page
+            last_page = self.__pages[len(self.__pages) - 1]
+
+            if last_page.try_append(text_unit):
+                # text unit fits into the last existing page
+                return True
+
+        if len(self.__pages) <= self.__max_page_number:
+            # book is not full, adding a new page
+            new_page = McPage(ruler=self.__ruler)
+
+            if new_page.try_append(text_unit):
+                # text was added into the new page
+                # adding page to the book
+                self.__pages.append(new_page)
+                return True
+            else:
+                # text not fit even in a new line
+                return False
+
+    def get_text(self) -> str:
+        line_text = map(lambda page: page.get_text(), self.__pages)
+        return '-------- Book --------\n' + '\n'.join(line_text)
 
 
 class TextContainerWriter:
@@ -116,7 +151,7 @@ class TextContainerWriter:
         self.__ruler = ruler
 
     def write(self) -> TextContainer:
-        text_container = McPage(ruler=self.__ruler)
+        text_container = McBook(ruler=self.__ruler)
 
         deep_factor = 0
         while True:
