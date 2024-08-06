@@ -11,7 +11,7 @@ class FormatFlag(Enum):
 class TextUnit(ABC):
 
     @abstractmethod
-    def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
         pass
 
     def __init__(self, raw_text: str, format_flags=None):
@@ -38,7 +38,7 @@ class TextUnit(ABC):
     def get_format_flags(self) -> list[FormatFlag]:
         return self.__format_flags
 
-    def get_sub_units(self) -> List['TextUnit']:
+    def get_sub_units(self) -> list['TextUnit']:
         return self.__sub_units
 
     # address = [] - leads to self
@@ -78,7 +78,7 @@ class EmptyUnit(TextUnit):
     def __str__(self):
         return f"{type(self).__name__}"
 
-    def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
         return []
 
     def get_raw_text(self) -> str:
@@ -87,7 +87,14 @@ class EmptyUnit(TextUnit):
 
 class TextWordUnit(TextUnit):
 
-    def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
+        # no sub text units for Word
+        return []
+
+
+class TextWordPairUnit(TextUnit):
+
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
         # no sub text units for Word
         return []
 
@@ -95,7 +102,7 @@ class TextWordUnit(TextUnit):
 class TextSubSentenceUnit(TextUnit):
 
     @staticmethod
-    def __mapper(enumerated_item) -> TextUnit:
+    def __mapper(enumerated_item) -> TextWordUnit:
         index = enumerated_item[0]
         value = enumerated_item[1]
 
@@ -108,11 +115,38 @@ class TextSubSentenceUnit(TextUnit):
             format_flags=format_flags,
         )
 
-    def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
+    @staticmethod
+    def __build_words_and_word_pairs(words: list['TextWordUnit']) -> list['TextUnit']:
+        max_satellite_size = 3
+        words_and_word_pairs = []
+
+        pair_index = 0
+
+        while pair_index < len(words):
+            word_left = words[pair_index]
+            word_right = words[pair_index + 1] if len(words) > pair_index + 1 else None
+
+            if len(word_left.get_raw_text()) <= max_satellite_size and word_right is not None:
+                pair_text = word_left.get_raw_text() + word_right.get_separator() + word_right.get_raw_text()
+                pair = TextWordPairUnit(
+                    raw_text=pair_text,
+                    format_flags=word_left.get_format_flags(),  # take format flags from the left word only
+                )
+                words_and_word_pairs.append(pair)
+                pair_index = pair_index + 1  # extra index move
+            else:
+                words_and_word_pairs.append(word_left)
+
+            pair_index = pair_index + 1
+
+        return words_and_word_pairs
+
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
         split_regex = r'\S+'
         words = re.findall(split_regex, raw_text)
         words = list(map(self.__mapper, enumerate(words)))
-        return words
+        words_and_word_pairs = self.__build_words_and_word_pairs(words=words)
+        return words_and_word_pairs
 
 
 class TextSentenceUnit(TextUnit):
@@ -131,7 +165,7 @@ class TextSentenceUnit(TextUnit):
             format_flags=format_flags,
         )
 
-    def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
         split_regex = r'.+?(?:[.,;]|$)'
         sub_sentences = re.findall(split_regex, raw_text, re.MULTILINE)
         sub_sentences = list(map(self.__mapper, enumerate(sub_sentences)))
@@ -154,7 +188,7 @@ class TextParagraphUnit(TextUnit):
             format_flags=format_flags,
         )
 
-    def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
         # sentences selector
         split_regex = r'([^.!?]*(?:\.\.\.|[.!?])(?=\s|$))'
         sentences = re.findall(split_regex, raw_text)
@@ -171,10 +205,10 @@ class TextRootUnit(TextUnit):
 
         return TextParagraphUnit(
             raw_text=value.strip(),
-            format_flags=[FormatFlag.PARAGRAPH], # adding PARAGRAPH flag to each item
+            format_flags=[FormatFlag.PARAGRAPH],  # adding PARAGRAPH flag to each item
         )
 
-    def _parse_sub_units(self, raw_text: str) -> List['TextUnit']:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
         # paragraphs selector
         split_regex = r'.+\n|.+'
         paragraphs = re.findall(split_regex, raw_text)
