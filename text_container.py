@@ -1,28 +1,10 @@
 import copy
 from abc import ABC, abstractmethod
 
+from character_ruler import McCharRuler
 from model.text_empty_unit import TextEmptyUnit
 from model.text_unit import TextUnit, FormatFlag
 from text_unit_reader import TextUnitReader
-
-
-class McCharRuler:
-    char_to_width_dict: dict[str, int]
-
-    def __init__(self, char_to_width_dict: dict[str, int]):
-        self.char_to_width_dict = char_to_width_dict
-
-    def get_width(self, text: str):
-        if len(text) == 0:
-            return 0
-
-        text_width = 0
-        between_chars_width = 1
-
-        for char in text:
-            char_width = self.char_to_width_dict[char]
-            text_width += char_width + between_chars_width
-        return text_width - between_chars_width
 
 
 class TextContainer(ABC):
