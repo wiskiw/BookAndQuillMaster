@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 import re
 
-from book_formatter import McBookFormatter
-from book_writer import BookWriter
+from bookmaster.book_formatter import McBookFormatter
+from bookmaster.book_writer import BookWriter
 from other.book_utils import *
-from character_ruler import McCharRuler
+from bookmaster.character_ruler import McCharRuler
 from other.io_utils import write_json, write_file, read_file, export_text_unit
-from model.text_root_unit import TextRootUnit
-from text_container import McBook
-from text_unit_reader import TextUnitReader
+from bookmaster.model.text_root_unit import TextRootUnit
+from bookmaster.text_container import McBook
+from bookmaster.text_unit_reader import TextUnitReader
 from other.telegram.tg_tool import *
 import asyncio
 import sys
 
 src_dir = 'content/neural_horo'
 channel_username = '@neural_horo'
-char_width_dict_file = 'char_width.txt'
+char_width_dict_file = 'bookmaster/char_width.txt'
 
 HORO_SIGN_KEY_ARIES = 'aries'
 HORO_SIGN_KEY_TAURUS = 'taurus'

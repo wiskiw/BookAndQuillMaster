@@ -1,8 +1,8 @@
-from book_writing_config import BookWritingConfig
-from character_ruler import McCharRuler
-from model.text_empty_unit import TextEmptyUnit
-from text_container import McBook
-from text_unit_reader import TextUnitReader
+from bookmaster.book_writing_config import BookWritingConfig
+from bookmaster.character_ruler import McCharRuler
+from bookmaster.model.text_empty_unit import TextEmptyUnit
+from bookmaster.text_container import McBook
+from bookmaster.text_unit_reader import TextUnitReader
 
 _DEFAULT_CONFIG = BookWritingConfig(
     allow_new_sentence_on_the_last_line=False,

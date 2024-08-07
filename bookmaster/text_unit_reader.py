@@ -1,5 +1,5 @@
-from model.text_empty_unit import TextEmptyUnit
-from model.text_unit import TextUnit
+from bookmaster.model.text_empty_unit import TextEmptyUnit
+from bookmaster.model.text_unit import TextUnit
 
 
 class TextUnitReader:

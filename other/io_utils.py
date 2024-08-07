@@ -3,7 +3,7 @@ import os
 
 import json5
 
-from model.text_unit import TextUnit
+from bookmaster.model.text_unit import TextUnit
 
 
 def export_text_unit(file_path: str, text_unit: TextUnit):

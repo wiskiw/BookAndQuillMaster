@@ -1,4 +1,4 @@
-from model.text_unit import TextUnit
+from bookmaster.model.text_unit import TextUnit
 
 
 class TextWordUnit(TextUnit):

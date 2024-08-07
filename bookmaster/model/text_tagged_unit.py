@@ -1,7 +1,7 @@
 import re
 
-from model.text_paragraph_unit import TextParagraphUnit
-from model.text_unit import TextUnit, FormatFlag, FORMAT_FLAG_TAGS
+from bookmaster.model.text_paragraph_unit import TextParagraphUnit
+from bookmaster.model.text_unit import TextUnit, FormatFlag, FORMAT_FLAG_TAGS
 from other.utils import map_indexed
 
 

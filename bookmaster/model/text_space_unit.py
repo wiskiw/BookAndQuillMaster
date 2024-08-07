@@ -1,7 +1,7 @@
 import re
 
-from model.text_unit import FormatFlag
-from model.text_word_unit import TextWordUnit
+from bookmaster.model.text_unit import FormatFlag
+from bookmaster.model.text_word_unit import TextWordUnit
 
 
 class TextSpaceUnit(TextWordUnit):

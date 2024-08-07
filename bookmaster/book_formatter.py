@@ -1,4 +1,4 @@
-from text_container import McBook
+from bookmaster.text_container import McBook
 
 
 class McBookFormatter:

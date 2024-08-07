@@ -1,8 +1,8 @@
 import re
 from dataclasses import dataclass
 
-from model.text_tagged_unit import TextTaggedUnit
-from model.text_unit import TextUnit
+from bookmaster.model.text_tagged_unit import TextTaggedUnit
+from bookmaster.model.text_unit import TextUnit
 from other.utils import map_indexed
 
 

@@ -1,10 +1,10 @@
 import copy
 
-from book_writing_config import BookWritingConfig
-from character_ruler import McCharRuler
-from model.text_sentence_unit import TextSentenceUnit
-from model.text_sub_sentence_unit import TextSubSentenceUnit
-from model.text_unit import TextUnit, FormatFlag
+from bookmaster.book_writing_config import BookWritingConfig
+from bookmaster.character_ruler import McCharRuler
+from bookmaster.model.text_sentence_unit import TextSentenceUnit
+from bookmaster.model.text_sub_sentence_unit import TextSubSentenceUnit
+from bookmaster.model.text_unit import TextUnit, FormatFlag
 
 
 class McLine:

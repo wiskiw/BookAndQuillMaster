@@ -1,11 +1,11 @@
-from book_formatter import McBookFormatter
-from book_writer import BookWriter
+from bookmaster.book_formatter import McBookFormatter
+from bookmaster.book_writer import BookWriter
 from other.io_utils import *
-from model.text_root_unit import *
-from text_container import McCharRuler
-from text_unit_reader import TextUnitReader
+from bookmaster.model.text_root_unit import *
+from bookmaster.text_container import McCharRuler
+from bookmaster.text_unit_reader import TextUnitReader
 
-char_width_dict_file = 'char_width.txt'
+char_width_dict_file = 'bookmaster/char_width.txt'
 export_text_unit_file = './debug/text_units.json5'
 input_file = './debug/input.txt'
 
