@@ -89,22 +89,18 @@ class TextWordUnit(TextUnit):
     pass
 
 
-class TextWordPairUnit(TextUnit):
+class TextWordGroupUnit(TextUnit):
 
-    def __init__(self, sub_unit_left: TextUnit, sub_unit_right: TextUnit):
-        # todo remove space separator
-        pair_text = sub_unit_left.get_raw_text() + ' ' + sub_unit_right.get_raw_text()
+    def __init__(self, sub_units: list[TextUnit]):
+        self.__predefined_sub_units = sub_units
 
         super().__init__(
-            raw_text=pair_text,
-            format_flags=sub_unit_left.get_format_flags(),  # take format flags from the left word only,
+            raw_text=''.join(map(lambda unit: unit.get_raw_text(), sub_units)),
+            format_flags=sub_units[0].get_format_flags(),  # take format flags from the first word
         )
 
-        self.__sub_unit_left = sub_unit_left
-        self.__sub_unit_right = sub_unit_right
-
     def get_sub_units(self) -> list['TextUnit']:
-        return [self.__sub_unit_left, self.__sub_unit_right]
+        return self.__predefined_sub_units
 
 
 class TextSubSentenceUnit(TextUnit):
@@ -113,8 +109,8 @@ class TextSubSentenceUnit(TextUnit):
         split_regex = r'\S+|\s+'  # words and spaces selector
         words = re.findall(split_regex, raw_text)
         words = list(map(self.__map_sub_unit, enumerate(words)))
-        words_and_word_pairs = self.__build_words_and_word_pairs(words=words)
-        return words_and_word_pairs
+        words_and_words_groups = TextSubSentenceUnit.__build_words_and_words_groups(words=words)
+        return words_and_words_groups
 
     def __map_sub_unit(self, enumerated_item) -> TextUnit:
         index = enumerated_item[0]
@@ -139,29 +135,49 @@ class TextSubSentenceUnit(TextUnit):
             )
 
     @staticmethod
-    def __build_words_and_word_pairs(words: list['TextUnit']) -> list['TextUnit']:
-        return words
-        # todo implement proper pairs splitting
+    def get_subarray(array, start_index, count):
+        if start_index < 0:
+            raise ValueError("start_index must be non-negative")
+
+        # Ensure start_index doesn't exceed array length
+        if start_index >= len(array):
+            return []
+
+        # Calculate end_index ensuring it doesn't exceed array length
+        safe_end_index = min(start_index + count, len(array))
+        return array[start_index:safe_end_index]
+
+    @staticmethod
+    def __build_words_and_words_groups(words: list['TextUnit']) -> list['TextUnit']:
+        group_size = 3
         max_satellite_size = 3
         words_and_word_pairs = []
 
-        pair_index = 0
+        group_index = 0
 
-        while pair_index < len(words):
-            word_left = words[pair_index]
-            word_right = words[pair_index + 1] if len(words) > pair_index + 1 else None
+        while group_index < len(words):
+            word_group = TextSubSentenceUnit.get_subarray(array=words, start_index=group_index, count=group_size)
 
-            if len(word_left.get_raw_text()) <= max_satellite_size and word_right is not None:
-                pair = TextWordPairUnit(
-                    sub_unit_left=word_left,
-                    sub_unit_right=word_right,
+            # if len(word_group) == 0:
+            #     continue
+
+            group_first_word = word_group[0]
+            group_full = len(word_group) == group_size
+            group_starts_with_space = type(group_first_word) is TextSpaceUnit
+            if not group_full or group_starts_with_space:
+                words_and_word_pairs.append(group_first_word)
+                group_index = group_index + 1
+                continue
+
+            if len(group_first_word.get_raw_text()) <= max_satellite_size:
+                group_unit = TextWordGroupUnit(
+                    sub_units=word_group,
                 )
-                words_and_word_pairs.append(pair)
-                pair_index = pair_index + 1  # extra index move
+                words_and_word_pairs.append(group_unit)
+                group_index = group_index + group_size  # extra index move
             else:
-                words_and_word_pairs.append(word_left)
-
-            pair_index = pair_index + 1
+                words_and_word_pairs.append(group_first_word)
+                group_index = group_index + 1
 
         return words_and_word_pairs
 
