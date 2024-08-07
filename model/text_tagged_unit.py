@@ -34,7 +34,7 @@ class TextTaggedUnit(TextUnit):
             parent_format_flags.append(FormatFlag.REQUESTED_NEW_PAGE)
 
         return TextParagraphUnit(
-            raw_text=value,
+            raw_text=value.replace('\n', ''),
             format_flags=parent_format_flags,
         )
 

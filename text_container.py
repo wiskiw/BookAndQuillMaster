@@ -79,7 +79,7 @@ class McPage(TextContainer):
                 # text unit fits into the last existing line
                 return True
 
-        if len(self.__lines) <= self.__max_line_number:
+        if len(self.__lines) < self.__max_line_number:
             # page is not full, adding a new line
             new_line = McLine(ruler=self.__ruler)
 
