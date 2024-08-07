@@ -3,53 +3,43 @@ import string
 
 from model.text_space_unit import TextSpaceUnit
 from model.text_unit import TextUnit, FormatFlag
+from utils import map_indexed, get_subarray
 from model.text_word_group_unit import TextWordGroupUnit
 from model.text_word_unit import TextWordUnit
 
 
 class TextSubSentenceUnit(TextUnit):
 
-    def _parse_sub_units(self, raw_text: str) -> list[TextUnit]:
+    def _create_sub_units(self, raw_text: str) -> list['TextUnit']:
         split_regex = r'\S+|\s+'  # words and spaces selector
         words = re.findall(split_regex, raw_text)
-        words = list(map(self.__map_sub_unit, enumerate(words)))
+        words = map_indexed(self.__map_sub_unit, words)
         words_and_words_groups = TextSubSentenceUnit.__build_words_and_words_groups(words=words)
         return words_and_words_groups
 
-    def __map_sub_unit(self, enumerated_item) -> TextUnit:
-        index = enumerated_item[0]
-        value = enumerated_item[1]
+    def __map_sub_unit(self, index: int, value: str) -> TextUnit:
+        parent_format_flags = []
+        first_sub_unit = index == 0
 
-        format_flags = []
-        if FormatFlag.START_OF_PARAGRAPH in self.get_format_flags() and index == 0:
-            format_flags.append(FormatFlag.START_OF_PARAGRAPH)
+        if first_sub_unit and self.has_format_flag(FormatFlag.START_OF_PARAGRAPH):
+            parent_format_flags.append(FormatFlag.START_OF_PARAGRAPH)
 
-        if FormatFlag.START_OF_SENTENCE in self.get_format_flags() and index == 0:
-            format_flags.append(FormatFlag.START_OF_SENTENCE)
+        if first_sub_unit and self.has_format_flag(FormatFlag.START_OF_SENTENCE):
+            parent_format_flags.append(FormatFlag.START_OF_SENTENCE)
+
+        if first_sub_unit and self.has_format_flag(FormatFlag.REQUESTED_NEW_PAGE):
+            parent_format_flags.append(FormatFlag.REQUESTED_NEW_PAGE)
 
         if len(value.strip()) == 0:
             return TextSpaceUnit(
                 raw_text=value,
-                format_flags=format_flags,
+                format_flags=parent_format_flags,
             )
         else:
             return TextWordUnit(
                 raw_text=value,
-                format_flags=format_flags,
+                format_flags=parent_format_flags,
             )
-
-    @staticmethod
-    def get_subarray(array, start_index, count):
-        if start_index < 0:
-            raise ValueError("start_index must be non-negative")
-
-        # Ensure start_index doesn't exceed array length
-        if start_index >= len(array):
-            return []
-
-        # Calculate end_index ensuring it doesn't exceed array length
-        safe_end_index = min(start_index + count, len(array))
-        return array[start_index:safe_end_index]
 
     @staticmethod
     def __build_words_and_words_groups(words: list[TextUnit]) -> list[TextUnit]:
@@ -60,7 +50,7 @@ class TextSubSentenceUnit(TextUnit):
         group_index = 0
 
         while group_index < len(words):
-            word_group = TextSubSentenceUnit.get_subarray(array=words, start_index=group_index, count=group_size)
+            word_group = get_subarray(array=words, start_index=group_index, count=group_size)
 
             group_first_word = word_group[0]
             group_last_word = word_group[len(word_group) - 1]

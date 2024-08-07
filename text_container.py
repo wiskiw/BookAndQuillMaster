@@ -140,7 +140,9 @@ class McBook(TextContainer):
         self.__ruler = ruler
 
     def try_append(self, text_unit: TextUnit) -> bool:
-        if len(self.__pages) > 0:
+        new_page_required = FormatFlag.REQUESTED_NEW_PAGE in text_unit.get_format_flags()
+
+        if len(self.__pages) > 0 and not new_page_required:
             # attempt to append to the last existing page
             last_page = self.__pages[len(self.__pages) - 1]
 

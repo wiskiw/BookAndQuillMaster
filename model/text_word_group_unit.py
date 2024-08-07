@@ -11,5 +11,5 @@ class TextWordGroupUnit(TextUnit):
             format_flags=sub_units[0].get_format_flags(),  # take format flags from the first word
         )
 
-    def get_sub_units(self) -> list['TextUnit']:
+    def _create_sub_units(self, raw_text: str) -> list[TextUnit]:
         return self.__predefined_sub_units

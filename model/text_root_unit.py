@@ -1,23 +1,39 @@
 import re
+from dataclasses import dataclass
 
-from model.text_paragraph_unit import TextParagraphUnit
-from model.text_unit import TextUnit, FormatFlag
+from model.text_tagged_unit import TextTaggedUnit
+from model.text_unit import TextUnit
+from utils import map_indexed
 
 
 class TextRootUnit(TextUnit):
 
-    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        # paragraphs selector: empty and not
-        split_regex = r'.+\n|.+|\n'
-        paragraphs = re.findall(split_regex, raw_text)
-        paragraphs = list(map(self.__map_sub_unit, enumerate(paragraphs)))
-        return paragraphs
+    def _create_sub_units(self, raw_text: str) -> list['TextUnit']:
+        tag_regex = r'(\{\{\$[^}]*\}\})'
 
-    def __map_sub_unit(self, enumerated_item) -> TextUnit:
-        index = enumerated_item[0]
-        value = enumerated_item[1]
+        texts_and_tags_list = re.split(tag_regex, raw_text, flags=re.MULTILINE)
 
-        return TextParagraphUnit(
-            raw_text=value.replace('\n', ''),
-            format_flags=[FormatFlag.START_OF_PARAGRAPH],  # adding PARAGRAPH flag to each item
-        )
+        tagged_text_list = []
+        tags = []
+        for text_or_tag in texts_and_tags_list:
+            if re.fullmatch(tag_regex, text_or_tag):
+                # tag
+                tags.append(text_or_tag)
+            else:
+                # text
+                tagged_text = TaggedText(text=text_or_tag, tags=tags)
+                tagged_text_list.append(tagged_text)
+                tags = []
+
+        tagged_units = map_indexed(TextRootUnit.__map_sub_unit, tagged_text_list)
+        return tagged_units
+
+    @staticmethod
+    def __map_sub_unit(index: int, value: 'TaggedText') -> TextUnit:
+        return TextTaggedUnit(raw_text=value.text, text_tags=value.tags)
+
+
+@dataclass
+class TaggedText:
+    text: str
+    tags: list[str]

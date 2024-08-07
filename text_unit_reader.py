@@ -59,4 +59,4 @@ class TextUnitReader:
                 self.__reading_complete = True
                 pass
 
-        return targeted_text_unit if targeted_text_unit is not None else EmptyUnit()
+        return targeted_text_unit if targeted_text_unit is not None else TextEmptyUnit()
