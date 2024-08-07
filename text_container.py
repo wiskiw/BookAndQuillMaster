@@ -54,18 +54,17 @@ class McLine(TextContainer):
 
     def __append(self, text_unit: TextUnit):
         empty_line = len(self.__text) == 0
-        spacing_unit = type(text_unit) is TextSpaceUnit
         start_of_paragraph = FormatFlag.START_OF_PARAGRAPH in text_unit.get_format_flags()
 
-        if empty_line and spacing_unit and not start_of_paragraph:
-            # do not add spacing text unit when:
-            # - current line is empty
-            # and
-            # - text unit is not a start of a paragraph
-            return
-
         if empty_line:
-            self.__text = text_unit.get_raw_text()
+            if not start_of_paragraph:
+                # trip spacing at the beginning of a text unit:
+                # - current line is empty
+                # and
+                # - text unit is not a start of a paragraph
+                self.__text = text_unit.get_raw_text().lstrip()
+            else:
+                self.__text = text_unit.get_raw_text()
         else:
             self.__text = ''.join([self.__text, text_unit.get_raw_text()])
 

@@ -1,4 +1,5 @@
 import re
+import string
 from enum import Enum
 from typing import List, Union
 from abc import ABC
@@ -158,26 +159,34 @@ class TextSubSentenceUnit(TextUnit):
         while group_index < len(words):
             word_group = TextSubSentenceUnit.get_subarray(array=words, start_index=group_index, count=group_size)
 
-            # if len(word_group) == 0:
-            #     continue
-
             group_first_word = word_group[0]
+            group_last_word = word_group[len(word_group) - 1]
+
             group_full = len(word_group) == group_size
             group_starts_with_space = type(group_first_word) is TextSpaceUnit
+            group_ends_with_punctuation = group_last_word.get_raw_text() in string.punctuation
             if not group_full or group_starts_with_space:
                 words_and_word_pairs.append(group_first_word)
                 group_index = group_index + 1
                 continue
 
-            if len(group_first_word.get_raw_text()) <= max_satellite_size:
-                group_unit = TextWordGroupUnit(
-                    sub_units=word_group,
+            if group_ends_with_punctuation:
+                # merge "<word><space><!?>>" into single word
+                word_unit = TextWordUnit(
+                    raw_text=''.join(map(lambda unit: unit.get_raw_text(), word_group)),
+                    format_flags=word_group[0].get_format_flags(),  # take format flags from the first word
                 )
+                words_and_word_pairs.append(word_unit)
+                group_index = group_index + group_size
+
+            elif len(group_first_word.get_raw_text()) <= max_satellite_size:
+                group_unit = TextWordGroupUnit(sub_units=word_group)
                 words_and_word_pairs.append(group_unit)
-                group_index = group_index + group_size  # extra index move
+                group_index = group_index + group_size  # move index
+
             else:
                 words_and_word_pairs.append(group_first_word)
-                group_index = group_index + 1
+                group_index = group_index + 1  # move index
 
         return words_and_word_pairs
 
