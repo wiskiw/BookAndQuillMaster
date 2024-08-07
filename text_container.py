@@ -1,8 +1,9 @@
 import copy
 from abc import ABC, abstractmethod
 
+from model.text_empty_unit import TextEmptyUnit
+from model.text_unit import TextUnit, FormatFlag
 from text_unit_reader import TextUnitReader
-from text_units import TextUnit, EmptyUnit, FormatFlag, TextSpaceUnit
 
 
 class McCharRuler:
@@ -186,7 +187,7 @@ class TextContainerWriter:
         while True:
             text_unit = self.__reader.read_next(deep_factor=deep_factor)
 
-            if type(text_unit) is EmptyUnit:
+            if type(text_unit) is TextEmptyUnit:
                 # no more units that would fit into this text container
                 text_unit = self.__reader.read_next(deep_factor=deep_factor - 1)
                 print(f"WARNING some text wasn't added: '{text_unit.get_raw_text()}'")

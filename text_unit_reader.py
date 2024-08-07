@@ -1,4 +1,5 @@
-from text_units import TextUnit, EmptyUnit
+from model.text_empty_unit import TextEmptyUnit
+from model.text_unit import TextUnit
 
 
 class TextUnitReader:
@@ -38,7 +39,7 @@ class TextUnitReader:
 
     def __consume_next(self, update_address: bool = False, deep_factor: int = 0) -> TextUnit:
         if self.__reading_complete:
-            return EmptyUnit()
+            return TextEmptyUnit()
 
         scaled_read_address = self.__scale_read_address(deep_factor=deep_factor)
         targeted_text_unit = self.__text_unit.get_by_address(address=scaled_read_address)
