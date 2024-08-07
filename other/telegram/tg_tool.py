@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import time
+from dataclasses import dataclass
+
 from telethon import TelegramClient
 
 from other.telegram.tg_credits import API_ID, API_HASH
@@ -50,7 +52,7 @@ async def load_messages_with_details(channel_username, offset_id, limit):
     return messages
 
 
-async def load_filtered_messages(channel_username, offset_id, count, filter_valid):
+async def load_filtered_messages(channel_username, offset_id, count, filter_valid) -> 'FilteredMessages':
     request_limit = 20
 
     # Get the channel entity
@@ -86,6 +88,19 @@ async def load_filtered_messages(channel_username, offset_id, count, filter_vali
 
     valid_messages = valid_messages[:count]
     print(
-        f"Found {len(valid_messages)} valid messages in {request_index + 1} requests. Used id range: {last_loaded_message.id}-{first_loaded_message.id}.")
+        f"Found {len(valid_messages)} valid messages in {request_index + 1} requests. "
+        f"Used id range: {last_loaded_message.id}-{first_loaded_message.id}."
+    )
 
-    return valid_messages
+    return RangedMessages(
+        id_range_start=last_loaded_message.id,
+        id_range_end=first_loaded_message.id,
+        messages=valid_messages
+    )
+
+
+@dataclass
+class RangedMessages:
+    id_range_start: int
+    id_range_end: int
+    messages: list

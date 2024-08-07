@@ -23,7 +23,7 @@
 §l§nЗАПРЕЩЕНО!§r
 
 
-{{content_list}}
+{{quite_raw_content_list}}
 {{$new_page}}
 §7Источник:
 §nt.me/statham_jason§r

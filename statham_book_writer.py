@@ -8,6 +8,7 @@ from bookmaster.text_unit_reader import TextUnitReader
 from other.book_utils import fill_up_raw_template, move_to_bookcopy_dir
 from other.io_utils import read_file, write_json, export_text_unit, write_file
 from other.telegram.tg_tool import *
+from emoji import distinct_emoji_list
 import asyncio
 import sys
 
@@ -48,7 +49,16 @@ def build_raw_content_list(message_list) -> list[str]:
     return raw_quote_content_list
 
 
-def is_message_valid(message):
+def is_message_valid(message) -> bool:
+    # message.entities == 1 - only for © Джейсон Стетхем link
+    has_one_link = message.entities is None or len(message.entities) == 1
+    has_no_replies = message.reply_markup is None
+
+    clean_message = clear_message_text(message)
+    has_no_emoji = len(distinct_emoji_list(clean_message)) == 0
+    if not has_one_link or not has_no_replies or not has_no_emoji:
+        return False
+
     raw_quote_template = read_raw_quote_template()
     raw_quote_content = build_raw_quote_content(raw_quote_template, message)
 
@@ -56,12 +66,8 @@ def is_message_valid(message):
     text_unit_reader = TextUnitReader(text_unit=root_unit)
     quote_book = BookWriter(reader=text_unit_reader, ruler=ruler).write()
 
-    # message.entities == 1 - only for © Джейсон Стетхем link
-    has_one_link = message.entities is None or len(message.entities) == 1
-
     fit_in_single_page = len(quote_book.get_pages()) == 1
-
-    return has_one_link and message.reply_markup is None and fit_in_single_page
+    return fit_in_single_page
 
 
 def build_raw_quote_content(raw_quote_template: str, message):
@@ -102,7 +108,7 @@ async def __main__(cmd_args):
         print('Please specify: <episode> <min_id> <count>')
         return
 
-    messages = await load_filtered_messages(
+    ranged_messages = await load_filtered_messages(
         channel_username=channel_username,
         offset_id=arg_offset_id,
         count=arg_count,
@@ -111,7 +117,7 @@ async def __main__(cmd_args):
 
     args_dictionary = {
         'episode': arg_episode,
-        'content_list': '\n'.join(build_raw_content_list(messages)),
+        'quite_raw_content_list': '\n'.join(build_raw_content_list(ranged_messages.messages)),
     }
 
     # create raw content
@@ -123,7 +129,9 @@ async def __main__(cmd_args):
 
     # saving json book
     book_formatter = McBookFormatter(book)
-    destination_file_name = f"statham_{arg_episode}.json"
+    destination_file_name = \
+        f"statham_{arg_episode}_{ranged_messages.id_range_start}-{ranged_messages.id_range_end}.json"
+
     destination_file_path = f"{src_dir}/{destination_file_name}"
     write_json(destination_file_path, book_formatter.to_json())
     print(f"Written a book with {len(book.get_pages())} page(s)")
