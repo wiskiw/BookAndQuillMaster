@@ -2,7 +2,7 @@ import re
 
 from model.text_sub_sentence_unit import TextSubSentenceUnit
 from model.text_unit import TextUnit, FormatFlag, FORMAT_FLAG_TAGS
-from utils import map_indexed
+from other.utils import map_indexed
 
 
 class TextSentenceUnit(TextUnit):

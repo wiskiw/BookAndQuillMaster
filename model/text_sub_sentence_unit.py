@@ -3,7 +3,7 @@ import string
 
 from model.text_space_unit import TextSpaceUnit
 from model.text_unit import TextUnit, FormatFlag
-from utils import map_indexed, get_subarray
+from other.utils import map_indexed, get_subarray
 from model.text_word_group_unit import TextWordGroupUnit
 from model.text_word_unit import TextWordUnit
 

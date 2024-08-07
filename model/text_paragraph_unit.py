@@ -1,8 +1,8 @@
 import re
 
 from model.text_sentence_unit import TextSentenceUnit
-from model.text_unit import TextUnit, FormatFlag, FORMAT_FLAG_TAGS
-from utils import map_indexed
+from model.text_unit import TextUnit, FormatFlag
+from other.utils import map_indexed
 
 
 class TextParagraphUnit(TextUnit):

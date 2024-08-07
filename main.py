@@ -1,7 +1,8 @@
 from book_formatter import McBookFormatter
-from io_utils import *
+from book_writer import BookWriter
+from other.io_utils import *
 from model.text_root_unit import *
-from text_container import McCharRuler, BookWriter
+from text_container import McCharRuler
 from text_unit_reader import TextUnitReader
 
 char_width_dict_file = 'char_width.txt'

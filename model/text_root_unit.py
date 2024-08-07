@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from model.text_tagged_unit import TextTaggedUnit
 from model.text_unit import TextUnit
-from utils import map_indexed
+from other.utils import map_indexed
 
 
 class TextRootUnit(TextUnit):
