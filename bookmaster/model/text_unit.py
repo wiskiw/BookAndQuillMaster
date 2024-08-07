@@ -8,6 +8,7 @@ class FormatFlag(Enum):
     START_OF_PARAGRAPH = 'START_OF_PARAGRAPH'
     START_OF_SENTENCE = 'START_OF_SENTENCE'
     REQUESTED_NEW_PAGE = 'START_OF_PAGE'
+    IGNORE_UNIT = 'IGNORE_UNIT'  # do not allow to add exactly this unit (sub units are allowed)
 
 
 FORMAT_FLAG_TAGS = {

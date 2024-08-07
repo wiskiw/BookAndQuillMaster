@@ -136,6 +136,9 @@ class McBook:
         return self.__title
 
     def try_append(self, text_unit: TextUnit) -> bool:
+        if text_unit.has_format_flag(FormatFlag.IGNORE_UNIT):
+            return False
+
         new_page_required = text_unit.has_format_flag(FormatFlag.REQUESTED_NEW_PAGE)
 
         if len(self.__pages) > 0 and not new_page_required:

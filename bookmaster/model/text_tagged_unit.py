@@ -10,8 +10,7 @@ class TextTaggedUnit(TextUnit):
 
     def __init__(self, raw_text: str, format_flags: list[FormatFlag] = None, text_tags: list[str] = None):
         parent_format_flags = format_flags if format_flags is not None else []
-        self_format_flags = TextTaggedUnit.__get_format_flag_list_by_text_tags(text_tags) if text_tags is not None \
-            else []
+        self_format_flags = TextTaggedUnit.__get_format_flag_list(text_tags)
 
         super().__init__(
             raw_text=raw_text,
@@ -39,8 +38,14 @@ class TextTaggedUnit(TextUnit):
         )
 
     @staticmethod
-    def __get_format_flag_list_by_text_tags(text_tag_list: list[str]) -> list[FormatFlag]:
-        return list(map(TextTaggedUnit.__get_format_flag_by_text_tag, text_tag_list))
+    def __get_format_flag_list(text_tag_list: list[str]) -> list[FormatFlag]:
+        text_tag_list = text_tag_list if text_tag_list is not None else []
+
+        format_flags = []
+        format_flags = format_flags + list(map(TextTaggedUnit.__get_format_flag_by_text_tag, text_tag_list))
+        format_flags.append(FormatFlag.IGNORE_UNIT)
+
+        return format_flags
 
     @staticmethod
     def __get_format_flag_by_text_tag(text_tag: str) -> FormatFlag:

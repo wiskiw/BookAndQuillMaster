@@ -2,11 +2,20 @@ import re
 from dataclasses import dataclass
 
 from bookmaster.model.text_tagged_unit import TextTaggedUnit
-from bookmaster.model.text_unit import TextUnit
+from bookmaster.model.text_unit import TextUnit, FormatFlag
 from other.utils import map_indexed
 
 
 class TextRootUnit(TextUnit):
+
+    def __init__(self, raw_text: str, format_flags: list[FormatFlag] = None):
+        parent_format_flags = format_flags if format_flags is not None else []
+        self_format_flags = [FormatFlag.IGNORE_UNIT]
+
+        super().__init__(
+            raw_text=raw_text,
+            format_flags=parent_format_flags + self_format_flags,
+        )
 
     def _create_sub_units(self, raw_text: str) -> list['TextUnit']:
         tag_regex = r'(\{\{\$[^}]*\}\})'
