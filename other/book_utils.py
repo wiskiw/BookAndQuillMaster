@@ -2,9 +2,9 @@ import shutil
 
 
 def fill_up_raw_template(raw_template: str, args_dictionary):
-    raw_content = {}
+    raw_content = raw_template
     for arg_key, arg_value in args_dictionary.items():
-        raw_content = raw_template.replace(f"{{{{{arg_key}}}}}", str(arg_value))
+        raw_content = raw_content.replace(f"{{{{{arg_key}}}}}", str(arg_value))
 
     return raw_content
 

@@ -1,0 +1,4 @@
+{{$new_page}}
+{{quote}}
+
+§7© §o{{author}}§r
