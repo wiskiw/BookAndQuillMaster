@@ -13,10 +13,6 @@ class TextContainer(ABC):
     def try_append(self, text_unit: TextUnit) -> bool:
         pass
 
-    @abstractmethod
-    def get_pretty_str(self) -> str:
-        pass
-
 
 class McLine(TextContainer):
 
@@ -58,9 +54,6 @@ class McLine(TextContainer):
         else:
             return False
 
-    def get_pretty_str(self) -> str:
-        return self.get_text()
-
     def get_text(self) -> str:
         # ignoring right spacings when returning line text
         return self.__text.rstrip()
@@ -99,15 +92,6 @@ class McPage(TextContainer):
                 # text not fit even in a new line
                 return False
 
-    def get_pretty_str(self) -> str:
-        str_lines = []
-        for enumerated_line in enumerate(self.__lines):
-            index = enumerated_line[0]
-            mc_line = enumerated_line[1]
-            str_lines.append(f"{index}: {mc_line.get_pretty_str()}")
-
-        return '\n'.join(str_lines)
-
     def get_lines(self) -> list[McLine]:
         return self.__lines
 
@@ -117,9 +101,16 @@ class McBook(TextContainer):
     def __init__(self, ruler: McCharRuler):
         super().__init__()
 
+        self.__title = None
         self.__pages: list[McPage] = []
         self.__max_page_number = 100
         self.__ruler = ruler
+
+    def set_title(self, title: str):
+        self.__title = title
+
+    def get_title(self) -> str:
+        return self.__title
 
     def try_append(self, text_unit: TextUnit) -> bool:
         new_page_required = FormatFlag.REQUESTED_NEW_PAGE in text_unit.get_format_flags()
@@ -145,26 +136,17 @@ class McBook(TextContainer):
                 # text not fit even in a new line
                 return False
 
-    def get_pretty_str(self) -> str:
-        str_pages = []
-        for enumerated_page in enumerate(self.__pages):
-            index = enumerated_page[0]
-            mc_page = enumerated_page[1]
-            str_pages.append(f" -------- Page {index} -------- \n" + mc_page.get_pretty_str())
-
-        return '\n\n'.join(str_pages)
-
     def get_pages(self) -> list[McPage]:
         return self.__pages
 
 
-class TextContainerWriter:
+class BookWriter:
 
     def __init__(self, reader: TextUnitReader, ruler: McCharRuler):
         self.__reader = reader
         self.__ruler = ruler
 
-    def write(self) -> TextContainer:
+    def write(self) -> McBook:
         text_container = McBook(ruler=self.__ruler)
 
         deep_factor = 0
@@ -174,7 +156,8 @@ class TextContainerWriter:
             if type(text_unit) is TextEmptyUnit:
                 # no more units that would fit into this text container
                 text_unit = self.__reader.read_next(deep_factor=deep_factor - 1)
-                print(f"WARNING some text wasn't added: '{text_unit.get_raw_text()}'")
+                if type(text_unit) is not TextEmptyUnit:
+                    print(f"WARNING some text wasn't added: '{text_unit.get_raw_text()}'")
                 break
 
             was_appended = text_container.try_append(text_unit=text_unit)

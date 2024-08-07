@@ -1,17 +1,17 @@
-from debug_utils import *
+from book_formatter import McBookFormatter
+from io_utils import *
 from model.text_root_unit import *
-from text_container import McCharRuler, TextContainerWriter
+from text_container import McCharRuler, BookWriter
 from text_unit_reader import TextUnitReader
 
 char_width_dict_file = 'char_width.txt'
-export_text_unit_file = './text_units.json5'
-input_file = './input.txt'
-output_file = './output.txt'
+export_text_unit_file = './debug/text_units.json5'
+input_file = './debug/input.txt'
 
 
 def run():
     # reading input
-    raw_text = read_inout_file(file_path=input_file)
+    raw_text = read_file(file_path=input_file)
 
     # parsing text into units
     root_unit = TextRootUnit(raw_text)
@@ -21,12 +21,15 @@ def run():
 
     text_unit_reader = TextUnitReader(text_unit=root_unit)
     ruler = McCharRuler(char_width_dict_file=char_width_dict_file)
-    text_container_writer = TextContainerWriter(reader=text_unit_reader, ruler=ruler)
+    text_container_writer = BookWriter(reader=text_unit_reader, ruler=ruler)
     book = text_container_writer.write()
 
     # writing output
-    write_output_file(file_path=output_file, content=book.get_pretty_str())
-    print(book.get_pretty_str())
+    book_formatter = McBookFormatter(book)
+    write_json('./out/book_json.json', book_formatter.to_json())
+    write_file('./out/book_pretty.txt', book_formatter.to_pretty_text())
+
+    print(f"Written a book with {len(book.get_pages())} page(s)")
 
 
 if __name__ == '__main__':
