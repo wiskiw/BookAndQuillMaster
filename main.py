@@ -27,8 +27,8 @@ def run():
 
     # writing output
     book_formatter = McBookFormatter(book)
-    write_json('./out/book_json.json', book_formatter.to_json())
-    write_file('./out/book_pretty.txt', book_formatter.to_pretty_text())
+    write_json('./debug/book_json.json', book_formatter.to_json())
+    write_file('./debug/book_pretty.txt', book_formatter.to_pretty_text())
 
     print(f"Written a book with {len(book.get_pages())} page(s)")
 

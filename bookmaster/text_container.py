@@ -146,7 +146,7 @@ class McBook:
                 # text unit fits into the last existing page
                 return True
 
-        if len(self.__pages) <= self.__max_page_number:
+        if len(self.__pages) < self.__max_page_number:
             # book is not full, adding a new page
             new_page = McPage(ruler=self.__ruler, writing_config=self.__writing_config)
 
@@ -158,6 +158,8 @@ class McBook:
             else:
                 # text not fit even in a new line
                 return False
+
+        return False
 
     def get_pages(self) -> list[McPage]:
         return self.__pages

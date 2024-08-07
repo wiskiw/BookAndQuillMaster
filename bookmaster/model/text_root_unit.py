@@ -16,6 +16,9 @@ class TextRootUnit(TextUnit):
         tagged_text_list = []
         tags = []
         for text_or_tag in texts_and_tags_list:
+            if len(text_or_tag) == 0:
+                continue
+
             if re.fullmatch(tag_regex, text_or_tag):
                 # tag
                 tags.append(text_or_tag)

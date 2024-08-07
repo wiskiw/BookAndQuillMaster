@@ -13,12 +13,8 @@ import sys
 
 channel_username = '@statham_jason'
 src_dir = 'content/statham'
-char_width_dict_file = 'bookmaster/char_width.txt'
 
-load_message_count = 30
-max_message_len = 232
-max_line_breaks_per_message = 5
-min_reactions_count = 400
+ruler = McCharRuler(char_width_dict_file='bookmaster/char_width.txt')
 
 
 def remove_substr_start_end(s, start, end):
@@ -41,30 +37,43 @@ def clear_message_text(message):
 
 
 def build_raw_content_list(message_list) -> list[str]:
-    raw_quote_template = read_file(f"{src_dir}/raw_quote_template.txt")
+    raw_quote_template = read_raw_quote_template()
 
-    raw_content_list = []
+    raw_quote_content_list = []
 
     for message in message_list:
-        page_dick = {
-            'quote': clear_message_text(message),
-            'author': "Джейсон Стетхем"
-        }
-        raw_content = fill_up_raw_template(raw_template=raw_quote_template, args_dictionary=page_dick)
-        raw_content_list.append(raw_content)
+        raw_quote_content = build_raw_quote_content(raw_quote_template, message)
+        raw_quote_content_list.append(raw_quote_content)
 
-    return raw_content_list
+    return raw_quote_content_list
 
 
 def is_message_valid(message):
-    message_text = message.message
+    raw_quote_template = read_raw_quote_template()
+    raw_quote_content = build_raw_quote_content(raw_quote_template, message)
 
-    # message.entities) == 1 - only for © Джейсон Стетхем link
-    return message_text is not None \
-        and message_text.count('\n') <= max_line_breaks_per_message \
-        and len(message_text) <= max_message_len \
-        and message.reply_markup == None \
-        and (message.entities is None or len(message.entities) == 1)  # entity (link) onlin on it's own
+    root_unit = TextRootUnit(raw_quote_content)
+    text_unit_reader = TextUnitReader(text_unit=root_unit)
+    quote_book = BookWriter(reader=text_unit_reader, ruler=ruler).write()
+
+    # message.entities == 1 - only for © Джейсон Стетхем link
+    has_one_link = message.entities is None or len(message.entities) == 1
+
+    fit_in_single_page = len(quote_book.get_pages()) == 1
+
+    return has_one_link and message.reply_markup is None and fit_in_single_page
+
+
+def build_raw_quote_content(raw_quote_template: str, message):
+    quote_dict = {
+        'quote': clear_message_text(message),
+        'author': "Джейсон Стетхем"
+    }
+    return fill_up_raw_template(raw_template=raw_quote_template, args_dictionary=quote_dict)
+
+
+def read_raw_quote_template():
+    return read_file(f"{src_dir}/raw_quote_template.txt")
 
 
 def create_book(raw_content: str) -> McBook:
@@ -76,9 +85,7 @@ def create_book(raw_content: str) -> McBook:
     write_file(f'{src_dir}/raw_content.txt', raw_content)
 
     text_unit_reader = TextUnitReader(text_unit=root_unit)
-    ruler = McCharRuler(char_width_dict_file=char_width_dict_file)
-    text_container_writer = BookWriter(reader=text_unit_reader, ruler=ruler)
-    return text_container_writer.write()
+    return BookWriter(reader=text_unit_reader, ruler=ruler).write()
 
 
 async def __main__(cmd_args):
