@@ -19,7 +19,6 @@ class TextUnit(ABC):
             format_flags = []
 
         self.__raw_text: str = raw_text
-        self.__separator = ' '
         self.__format_flags: list[FormatFlag] = format_flags
         self.__sub_units: List[TextUnit] = self._parse_sub_units(raw_text=raw_text)
 
@@ -31,9 +30,6 @@ class TextUnit(ABC):
 
     def get_raw_text(self) -> str:
         return self.__raw_text
-
-    def get_separator(self) -> str:
-        return self.__separator
 
     def get_format_flags(self) -> list[FormatFlag]:
         return self.__format_flags
@@ -85,6 +81,10 @@ class EmptyUnit(TextUnit):
         return self.__str__()
 
 
+class TextSpaceUnit(TextUnit):
+    pass
+
+
 class TextWordUnit(TextUnit):
     pass
 
@@ -92,7 +92,8 @@ class TextWordUnit(TextUnit):
 class TextWordPairUnit(TextUnit):
 
     def __init__(self, sub_unit_left: TextUnit, sub_unit_right: TextUnit):
-        pair_text = sub_unit_left.get_raw_text() + sub_unit_right.get_separator() + sub_unit_right.get_raw_text()
+        # todo remove space separator
+        pair_text = sub_unit_left.get_raw_text() + ' ' + sub_unit_right.get_raw_text()
 
         super().__init__(
             raw_text=pair_text,
@@ -109,13 +110,13 @@ class TextWordPairUnit(TextUnit):
 class TextSubSentenceUnit(TextUnit):
 
     def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        split_regex = r'\S+'
+        split_regex = r'\S+|\s+'  # words and spaces selector
         words = re.findall(split_regex, raw_text)
         words = list(map(self.__map_sub_unit, enumerate(words)))
         words_and_word_pairs = self.__build_words_and_word_pairs(words=words)
         return words_and_word_pairs
 
-    def __map_sub_unit(self, enumerated_item) -> TextWordUnit:
+    def __map_sub_unit(self, enumerated_item) -> TextUnit:
         index = enumerated_item[0]
         value = enumerated_item[1]
 
@@ -126,13 +127,21 @@ class TextSubSentenceUnit(TextUnit):
         if FormatFlag.START_OF_SENTENCE in self.get_format_flags() and index == 0:
             format_flags.append(FormatFlag.START_OF_SENTENCE)
 
-        return TextWordUnit(
-            raw_text=value,
-            format_flags=format_flags,
-        )
+        if len(value.strip()) == 0:
+            return TextSpaceUnit(
+                raw_text=value,
+                format_flags=format_flags,
+            )
+        else:
+            return TextWordUnit(
+                raw_text=value,
+                format_flags=format_flags,
+            )
 
     @staticmethod
-    def __build_words_and_word_pairs(words: list['TextWordUnit']) -> list['TextUnit']:
+    def __build_words_and_word_pairs(words: list['TextUnit']) -> list['TextUnit']:
+        return words
+        # todo implement proper pairs splitting
         max_satellite_size = 3
         words_and_word_pairs = []
 
@@ -177,7 +186,7 @@ class TextSentenceUnit(TextUnit):
             format_flags.append(FormatFlag.START_OF_SENTENCE)
 
         return TextSubSentenceUnit(
-            raw_text=value.strip(),
+            raw_text=value,
             format_flags=format_flags,
         )
 
@@ -203,7 +212,7 @@ class TextParagraphUnit(TextUnit):
             format_flags.append(FormatFlag.START_OF_SENTENCE)
 
         return TextSentenceUnit(
-            raw_text=value.strip(),
+            raw_text=value,
             format_flags=format_flags,
         )
 
@@ -211,8 +220,8 @@ class TextParagraphUnit(TextUnit):
 class TextRootUnit(TextUnit):
 
     def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        # paragraphs selector
-        split_regex = r'.+\n|.+'
+        # paragraphs selector: empty and not
+        split_regex = r'.+\n|.+|\n'
         paragraphs = re.findall(split_regex, raw_text)
         paragraphs = list(map(self.__map_sub_unit, enumerate(paragraphs)))
         return paragraphs
@@ -222,6 +231,6 @@ class TextRootUnit(TextUnit):
         value = enumerated_item[1]
 
         return TextParagraphUnit(
-            raw_text=value.strip(),
+            raw_text=value.replace('\n', ''),
             format_flags=[FormatFlag.START_OF_PARAGRAPH],  # adding PARAGRAPH flag to each item
         )

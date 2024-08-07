@@ -2,7 +2,7 @@ import copy
 from abc import ABC, abstractmethod
 
 from text_unit_reader import TextUnitReader
-from text_units import TextUnit, EmptyUnit, FormatFlag
+from text_units import TextUnit, EmptyUnit, FormatFlag, TextSpaceUnit
 
 
 class McCharRuler:
@@ -48,16 +48,26 @@ class McLine(TextContainer):
         # use temporary object to check if text will fit after merging
         temp_mc_line = copy.deepcopy(self)
         temp_mc_line.__append(text_unit)
-        merged_text_width_px = self.__ruler.get_width(temp_mc_line.__text)
+        merged_text_width_px = self.__ruler.get_width(temp_mc_line.get_text())
 
         return merged_text_width_px <= self.__max_width_px
 
     def __append(self, text_unit: TextUnit):
-        if len(self.__text) == 0:
+        empty_line = len(self.__text) == 0
+        spacing_unit = type(text_unit) is TextSpaceUnit
+        start_of_paragraph = FormatFlag.START_OF_PARAGRAPH in text_unit.get_format_flags()
+
+        if empty_line and spacing_unit and not start_of_paragraph:
+            # do not add spacing text unit when:
+            # - current line is empty
+            # and
+            # - text unit is not a start of a paragraph
+            return
+
+        if empty_line:
             self.__text = text_unit.get_raw_text()
         else:
-            separator = text_unit.get_separator()
-            self.__text = separator.join([self.__text, text_unit.get_raw_text()])
+            self.__text = ''.join([self.__text, text_unit.get_raw_text()])
 
     def try_append(self, text_unit: TextUnit) -> bool:
         if self.__can_append(text_unit=text_unit):
@@ -67,10 +77,11 @@ class McLine(TextContainer):
             return False
 
     def get_pretty_str(self) -> str:
-        return self.__text
+        return self.get_text()
 
     def get_text(self) -> str:
-        return self.__text
+        # ignoring right spacings when returning line text
+        return self.__text.rstrip()
 
 
 class McPage(TextContainer):
