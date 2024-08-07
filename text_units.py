@@ -1,11 +1,12 @@
 import re
 from enum import Enum
 from typing import List, Union
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
 class FormatFlag(Enum):
-    PARAGRAPH = 'PARAGRAPH'
+    START_OF_PARAGRAPH = 'START_OF_PARAGRAPH'
+    START_OF_SENTENCE = 'START_OF_SENTENCE'
 
 
 class TextUnit(ABC):
@@ -85,10 +86,7 @@ class EmptyUnit(TextUnit):
 
 
 class TextWordUnit(TextUnit):
-
-    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        # no sub text units for Word
-        return []
+    pass
 
 
 class TextWordPairUnit(TextUnit):
@@ -110,13 +108,23 @@ class TextWordPairUnit(TextUnit):
 
 class TextSubSentenceUnit(TextUnit):
 
-    def __mapper(self, enumerated_item) -> TextWordUnit:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
+        split_regex = r'\S+'
+        words = re.findall(split_regex, raw_text)
+        words = list(map(self.__map_sub_unit, enumerate(words)))
+        words_and_word_pairs = self.__build_words_and_word_pairs(words=words)
+        return words_and_word_pairs
+
+    def __map_sub_unit(self, enumerated_item) -> TextWordUnit:
         index = enumerated_item[0]
         value = enumerated_item[1]
 
         format_flags = []
-        if FormatFlag.PARAGRAPH in self.get_format_flags() and index == 0:
-            format_flags.append(FormatFlag.PARAGRAPH)
+        if FormatFlag.START_OF_PARAGRAPH in self.get_format_flags() and index == 0:
+            format_flags.append(FormatFlag.START_OF_PARAGRAPH)
+
+        if FormatFlag.START_OF_SENTENCE in self.get_format_flags() and index == 0:
+            format_flags.append(FormatFlag.START_OF_SENTENCE)
 
         return TextWordUnit(
             raw_text=value,
@@ -148,75 +156,72 @@ class TextSubSentenceUnit(TextUnit):
 
         return words_and_word_pairs
 
-    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        split_regex = r'\S+'
-        words = re.findall(split_regex, raw_text)
-        words = list(map(self.__mapper, enumerate(words)))
-        words_and_word_pairs = self.__build_words_and_word_pairs(words=words)
-        return words_and_word_pairs
-
 
 class TextSentenceUnit(TextUnit):
 
-    def __mapper(self, enumerated_item) -> TextUnit:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
+        split_regex = r'[^,:;.]+(?:,|;|\.{3}|.)?'
+        sub_sentences = re.findall(split_regex, raw_text, re.MULTILINE)
+        sub_sentences = list(map(self.__map_sub_unit, enumerate(sub_sentences)))
+        return sub_sentences
+
+    def __map_sub_unit(self, enumerated_item) -> TextUnit:
         index = enumerated_item[0]
         value = enumerated_item[1]
 
         format_flags = []
-        if FormatFlag.PARAGRAPH in self.get_format_flags() and index == 0:
-            format_flags.append(FormatFlag.PARAGRAPH)
+        if FormatFlag.START_OF_PARAGRAPH in self.get_format_flags() and index == 0:
+            format_flags.append(FormatFlag.START_OF_PARAGRAPH)
+
+        if FormatFlag.START_OF_SENTENCE in self.get_format_flags() and index == 0:
+            format_flags.append(FormatFlag.START_OF_SENTENCE)
 
         return TextSubSentenceUnit(
             raw_text=value.strip(),
             format_flags=format_flags,
         )
 
-    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        split_regex = r'[^,:;.]+(?:,|;|\.{3}|.)?'
-        sub_sentences = re.findall(split_regex, raw_text, re.MULTILINE)
-        sub_sentences = list(map(self.__mapper, enumerate(sub_sentences)))
-        return sub_sentences
-
 
 class TextParagraphUnit(TextUnit):
 
-    @staticmethod
-    def __mapper(enumerated_item) -> TextUnit:
+    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
+        # sentences selector
+        split_regex = r'([^.!?]*(?:\.\.\.|[.!?])(?=\s|$))'
+        sentences = re.findall(split_regex, raw_text)
+        sentences = list(map(self.__map_sub_unit, enumerate(sentences)))
+        return sentences
+
+    def __map_sub_unit(self, enumerated_item) -> TextUnit:
         index = enumerated_item[0]
         value = enumerated_item[1]
 
         format_flags = []
+        if FormatFlag.START_OF_PARAGRAPH in self.get_format_flags() and index == 0:
+            format_flags.append(FormatFlag.START_OF_PARAGRAPH)
+
         if index == 0:
-            format_flags.append(FormatFlag.PARAGRAPH)
+            format_flags.append(FormatFlag.START_OF_SENTENCE)
 
         return TextSentenceUnit(
             raw_text=value.strip(),
             format_flags=format_flags,
         )
 
-    def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
-        # sentences selector
-        split_regex = r'([^.!?]*(?:\.\.\.|[.!?])(?=\s|$))'
-        sentences = re.findall(split_regex, raw_text)
-        sentences = list(map(self.__mapper, enumerate(sentences)))
-        return sentences
-
 
 class TextRootUnit(TextUnit):
-
-    @staticmethod
-    def __mapper(enumerated_item) -> TextUnit:
-        index = enumerated_item[0]
-        value = enumerated_item[1]
-
-        return TextParagraphUnit(
-            raw_text=value.strip(),
-            format_flags=[FormatFlag.PARAGRAPH],  # adding PARAGRAPH flag to each item
-        )
 
     def _parse_sub_units(self, raw_text: str) -> list['TextUnit']:
         # paragraphs selector
         split_regex = r'.+\n|.+'
         paragraphs = re.findall(split_regex, raw_text)
-        paragraphs = list(map(self.__mapper, enumerate(paragraphs)))
+        paragraphs = list(map(self.__map_sub_unit, enumerate(paragraphs)))
         return paragraphs
+
+    def __map_sub_unit(self, enumerated_item) -> TextUnit:
+        index = enumerated_item[0]
+        value = enumerated_item[1]
+
+        return TextParagraphUnit(
+            raw_text=value.strip(),
+            format_flags=[FormatFlag.START_OF_PARAGRAPH],  # adding PARAGRAPH flag to each item
+        )

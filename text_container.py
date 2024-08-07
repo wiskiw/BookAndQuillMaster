@@ -83,7 +83,7 @@ class McPage(TextContainer):
         self.__ruler = ruler
 
     def try_append(self, text_unit: TextUnit) -> bool:
-        new_line_required = FormatFlag.PARAGRAPH in text_unit.get_format_flags()
+        new_line_required = FormatFlag.START_OF_PARAGRAPH in text_unit.get_format_flags()
 
         if not new_line_required and len(self.__lines) > 0:
             # attempt to append to the last existing line
