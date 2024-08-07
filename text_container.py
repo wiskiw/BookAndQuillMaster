@@ -1,25 +1,19 @@
 import copy
-from abc import ABC, abstractmethod
 
+from book_writing_config import BookWritingConfig
 from character_ruler import McCharRuler
-from model.text_empty_unit import TextEmptyUnit
+from model.text_sentence_unit import TextSentenceUnit
+from model.text_sub_sentence_unit import TextSubSentenceUnit
 from model.text_unit import TextUnit, FormatFlag
-from text_unit_reader import TextUnitReader
 
 
-class TextContainer(ABC):
+class McLine:
 
-    @abstractmethod
-    def try_append(self, text_unit: TextUnit) -> bool:
-        pass
-
-
-class McLine(TextContainer):
-
-    def __init__(self, ruler: McCharRuler, text: str = ""):
+    def __init__(self, ruler: McCharRuler, writing_config: BookWritingConfig):
         super().__init__()
 
-        self.__text = text
+        self.__text = ""
+        self.__writing_config = writing_config
         self.__max_width_px = 114
         self.__ruler = ruler
 
@@ -33,7 +27,7 @@ class McLine(TextContainer):
 
     def __append(self, text_unit: TextUnit):
         empty_line = len(self.__text) == 0
-        start_of_paragraph = FormatFlag.START_OF_PARAGRAPH in text_unit.get_format_flags()
+        start_of_paragraph = text_unit.has_format_flag(FormatFlag.START_OF_PARAGRAPH)
 
         if empty_line:
             if not start_of_paragraph:
@@ -59,20 +53,24 @@ class McLine(TextContainer):
         return self.__text.rstrip()
 
 
-class McPage(TextContainer):
+class McPage:
 
-    def __init__(self, ruler: McCharRuler):
+    def __init__(self, ruler: McCharRuler, writing_config: BookWritingConfig):
         super().__init__()
 
+        self.__writing_config = writing_config
         self.__lines: list[McLine] = []
         self.__max_line_number = 14
         self.__ruler = ruler
 
     def try_append(self, text_unit: TextUnit) -> bool:
-        new_line_required = FormatFlag.START_OF_PARAGRAPH in text_unit.get_format_flags()
+        if not self.is_config_allow(text_unit):
+            return False
+
+        new_line_required = text_unit.has_format_flag(FormatFlag.START_OF_PARAGRAPH)
 
         if not new_line_required and len(self.__lines) > 0:
-            # attempt to append to the last existing line
+            # page not empty, trying to append to the last existing line
             last_line = self.__lines[len(self.__lines) - 1]
 
             if last_line.try_append(text_unit):
@@ -81,7 +79,7 @@ class McPage(TextContainer):
 
         if len(self.__lines) < self.__max_line_number:
             # page is not full, adding a new line
-            new_line = McLine(ruler=self.__ruler)
+            new_line = McLine(ruler=self.__ruler, writing_config=self.__writing_config)
 
             if new_line.try_append(text_unit):
                 # text was added into the new line
@@ -92,15 +90,40 @@ class McPage(TextContainer):
                 # text not fit even in a new line
                 return False
 
+        return False
+
+    def is_config_allow(self, text_unit: TextUnit) -> bool:
+        last_line_exist = len(self.__lines) == self.__max_line_number
+        adding_last_line = len(self.__lines) == self.__max_line_number - 1
+        start_of_sentence = text_unit.has_format_flag(FormatFlag.START_OF_SENTENCE)
+        sentence_or_sub_sentence_unit = type(text_unit) is TextSentenceUnit or type(text_unit) is TextSubSentenceUnit
+
+        if (last_line_exist and not self.__writing_config.allow_new_sentence_on_the_last_line
+                and start_of_sentence and not sentence_or_sub_sentence_unit):
+            # aborting attempt of adding a start of sentences unit (if it's not a whole sentence/sub-sentence)
+            # to existing last line
+            # skip sentence or sub-sentence to allow adding to the last line, if the whole sentence fits
+            return False
+
+        if (adding_last_line and not self.__writing_config.allow_new_sentence_on_the_last_line
+                and start_of_sentence and not sentence_or_sub_sentence_unit):
+            # aborting attempt of adding a start of sentences unit (if it's not a whole sentence/sub-sentence)
+            # to a new last line
+            # skip sentence or sub-sentence to allow adding to the last line, if the whole sentence fits
+            return False
+
+        return True
+
     def get_lines(self) -> list[McLine]:
         return self.__lines
 
 
-class McBook(TextContainer):
+class McBook:
 
-    def __init__(self, ruler: McCharRuler):
+    def __init__(self, ruler: McCharRuler, writing_config: BookWritingConfig):
         super().__init__()
 
+        self.__writing_config = writing_config
         self.__title = None
         self.__pages: list[McPage] = []
         self.__max_page_number = 100
@@ -113,7 +136,7 @@ class McBook(TextContainer):
         return self.__title
 
     def try_append(self, text_unit: TextUnit) -> bool:
-        new_page_required = FormatFlag.REQUESTED_NEW_PAGE in text_unit.get_format_flags()
+        new_page_required = text_unit.has_format_flag(FormatFlag.REQUESTED_NEW_PAGE)
 
         if len(self.__pages) > 0 and not new_page_required:
             # attempt to append to the last existing page
@@ -125,7 +148,7 @@ class McBook(TextContainer):
 
         if len(self.__pages) <= self.__max_page_number:
             # book is not full, adding a new page
-            new_page = McPage(ruler=self.__ruler)
+            new_page = McPage(ruler=self.__ruler, writing_config=self.__writing_config)
 
             if new_page.try_append(text_unit):
                 # text was added into the new page
@@ -138,34 +161,3 @@ class McBook(TextContainer):
 
     def get_pages(self) -> list[McPage]:
         return self.__pages
-
-
-class BookWriter:
-
-    def __init__(self, reader: TextUnitReader, ruler: McCharRuler):
-        self.__reader = reader
-        self.__ruler = ruler
-
-    def write(self) -> McBook:
-        text_container = McBook(ruler=self.__ruler)
-
-        deep_factor = 0
-        while True:
-            text_unit = self.__reader.read_next(deep_factor=deep_factor)
-
-            if type(text_unit) is TextEmptyUnit:
-                # no more units that would fit into this text container
-                text_unit = self.__reader.read_next(deep_factor=deep_factor - 1)
-                if type(text_unit) is not TextEmptyUnit:
-                    print(f"WARNING some text wasn't added: '{text_unit.get_raw_text()}'")
-                break
-
-            was_appended = text_container.try_append(text_unit=text_unit)
-            if was_appended:
-                self.__reader.consume_next(deep_factor=deep_factor)
-                deep_factor = 0
-                continue
-
-            deep_factor = deep_factor + 1
-
-        return text_container
