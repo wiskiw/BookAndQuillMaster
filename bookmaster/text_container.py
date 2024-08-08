@@ -166,3 +166,9 @@ class McBook:
 
     def get_pages(self) -> list[McPage]:
         return self.__pages
+
+    def get_page(self, index: int) -> McPage | None:
+        if index < 0 or index >= self.__max_page_number:
+            raise Exception(f'Page index is out of border. Available range 0<=index<{self.__max_page_number}')
+
+        return self.__pages[index] if index < len(self.__pages) else None

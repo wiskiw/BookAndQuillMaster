@@ -1,0 +1,3 @@
+{{$new_page}}§6§oДля выживания {{joke_number}}:§r
+
+{{joke}}

@@ -12,73 +12,84 @@ from emoji import distinct_emoji_list
 import asyncio
 import sys
 
-channel_username = '@statham_jason'
-src_dir = 'content/statham'
+# python3 joke_b.py 0 3200 27 
+
+src_dir = 'content/joke_b'
+channel_username = '@baneksru'
+
+min_reactions_count = 400
+max_pages_per_joke = 2
+last_page_min_lines = 2
 
 ruler = McCharRuler(char_width_dict_file='bookmaster/char_width.txt')
 
 
-def remove_substr_start_end(s, start, end):
-    return s[:start] + s[end + 1:]
-
-
 def clear_message(message):
-    result = message.message
+    message_text = message.message
+    return message_text.strip()
 
-    # remove original signature from the message
-    if message.entities is not None and len(message.entities) > 0:
-        author_name_entity_cashtag = message.entities[0]
-        result = remove_substr_start_end(result, author_name_entity_cashtag.offset,
-                                         author_name_entity_cashtag.offset + author_name_entity_cashtag.length)
 
-    return result \
-        .strip() \
-        .replace('  ', ' ')
+def get_message_reactions_count(message):
+    reactions_counter = 0
+
+    for rc in message.reactions.results:
+        reactions_counter += rc.count
+
+    return reactions_counter
 
 
 def is_message_valid(message) -> bool:
-    # message.entities == 1 - only for © Джейсон Стетхем link
+    reactions_counter = get_message_reactions_count(message)
     has_one_link = message.entities is None or len(message.entities) == 1
-    has_no_replies = message.reply_markup is None
-
-    clean_message = clear_message(message)
-    has_no_emoji = len(distinct_emoji_list(clean_message)) == 0
-    if not has_one_link or not has_no_replies or not has_no_emoji:
+    has_enough_reactions = reactions_counter >= min_reactions_count
+    if not has_enough_reactions or message.message is None or not has_one_link:
         return False
 
-    raw_quote_template = read_raw_quote_template()
-    raw_quote_content = build_raw_quote_content(raw_quote_template, message)
+    raw_joke_template = read_raw_joke_template()
+    raw_joke_content = build_raw_joke_content(
+        raw_template=raw_joke_template,
+        message=message,
+        joke_number=123,  # any number just to generate pages for validation
+    )
 
-    root_unit = TextRootUnit(raw_quote_content)
+    root_unit = TextRootUnit(raw_joke_content)
     text_unit_reader = TextUnitReader(text_unit=root_unit)
-    quote_book = BookWriter(reader=text_unit_reader, ruler=ruler).write()
+    joke_book = BookWriter(reader=text_unit_reader, ruler=ruler).write()
 
-    fit_in_single_page = len(quote_book.get_pages()) == 1
-    return fit_in_single_page
+    fit_in_page_limit = len(joke_book.get_pages()) <= max_pages_per_joke
+
+    last_page = joke_book.get_page(len(joke_book.get_pages()) - 1)
+    last_page_has_enough_lines = len(last_page.get_lines()) >= last_page_min_lines
+    return fit_in_page_limit and last_page_has_enough_lines
 
 
-def build_raw_quote_content(raw_quote_template: str, message):
+def read_raw_joke_template():
+    return read_file(f"{src_dir}/raw_joke_template.txt")
+
+
+def build_raw_joke_content(raw_template: str, message, joke_number: int):
     quote_dict = {
-        'quote': clear_message(message),
-        'author': "Джейсон Стетхем"
+        'joke': clear_message(message),
+        'joke_number': joke_number,
     }
-    return fill_up_raw_template(raw_template=raw_quote_template, args_dictionary=quote_dict)
-
-
-def read_raw_quote_template():
-    return read_file(f"{src_dir}/raw_quote_template.txt")
+    return fill_up_raw_template(raw_template=raw_template, args_dictionary=quote_dict)
 
 
 def build_raw_content_list(message_list) -> list[str]:
-    raw_quote_template = read_raw_quote_template()
+    raw_joke_template = read_raw_joke_template()
 
-    raw_quote_content_list = []
-
+    raw_joke_content_list = []
+    message_index = 0
     for message in message_list:
-        raw_quote_content = build_raw_quote_content(raw_quote_template, message)
-        raw_quote_content_list.append(raw_quote_content)
+        raw_joke_content = build_raw_joke_content(
+            raw_template=raw_joke_template,
+            message=message,
+            joke_number=message_index + 1,
+        )
+        raw_joke_content_list.append(raw_joke_content)
+        message_index += 1
 
-    return raw_quote_content_list
+    return raw_joke_content_list
 
 
 def create_book(raw_content: str) -> McBook:
@@ -116,7 +127,7 @@ async def __main__(cmd_args):
 
     args_dictionary = {
         'episode': arg_episode,
-        'quite_raw_content_list': '\n'.join(build_raw_content_list(ranged_messages.messages)),
+        'joke_raw_content_list': '\n'.join(build_raw_content_list(ranged_messages.messages)),
     }
 
     # create raw content
@@ -128,11 +139,10 @@ async def __main__(cmd_args):
 
     # saving json book
     book_formatter = McBookFormatter(book)
-    destination_file_name = \
-        f"statham_{arg_episode}_{ranged_messages.id_range_start}-{ranged_messages.id_range_end}.json"
-
+    destination_file_name = f"joke_b_{arg_episode}_{ranged_messages.id_range_start}-{ranged_messages.id_range_end}.json"
     destination_file_path = f"{src_dir}/{destination_file_name}"
     write_json(destination_file_path, book_formatter.to_json())
+    # write_file('./debug/book_pretty.txt', book_formatter.to_pretty_text())
     print(f"Written a book with {len(book.get_pages())} page(s)")
 
     move_to_bookcopy_dir(destination_file_path, destination_file_name)
