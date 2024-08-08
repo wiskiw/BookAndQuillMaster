@@ -50,7 +50,7 @@ class McCharRuler:
 
         for char in clean_text:
             if char not in self.char_to_width_dict:
-                raise Exception(f"Width is missing for character '{char}'")
+                raise Exception(f'Width is missing for character \'{char}\'')
 
             char_width = self.char_to_width_dict[char]
             text_width += char_width

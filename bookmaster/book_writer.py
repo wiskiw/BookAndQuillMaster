@@ -28,6 +28,7 @@ class BookWriter:
                 text_unit = self.__reader.read_next(deep_factor=deep_factor - 1)
                 if type(text_unit) is not TextEmptyUnit:
                     print(f"WARNING some text wasn't added: '{text_unit.get_raw_text()}'")
+                    raise ValueError(f"WARNING some text wasn't added: '{text_unit.get_raw_text()}'")
                 break
 
             was_appended = text_container.try_append(text_unit=text_unit)

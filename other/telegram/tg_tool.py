@@ -52,9 +52,7 @@ async def load_messages_with_details(channel_username, offset_id, limit):
     return messages
 
 
-async def load_filtered_messages(channel_username, offset_id, count, filter_valid) -> 'FilteredMessages':
-    request_limit = 20
-
+async def load_filtered_messages(channel_username, offset_id, count, filter_valid, requrest_size:int = 20) -> 'RangedMessages':
     # Get the channel entity
     await client.start()
     channel = await client.get_entity(channel_username)
@@ -67,10 +65,10 @@ async def load_filtered_messages(channel_username, offset_id, count, filter_vali
 
     while True:
         request_index += 1
-        print(f"Loading {request_limit} messages with start offset id {offset_id}, request {request_index} ")
+        print(f"Loading {requrest_size} messages with start offset id {offset_id}, request {request_index} ")
 
         # Loading messages
-        messages = await client.get_messages(channel, offset_id=offset_id, limit=request_limit)
+        messages = await client.get_messages(channel, offset_id=offset_id, limit=requrest_size)
 
         # print(f"raw messages:{messages}")
         valid_messages = valid_messages + filter_valid(messages)
@@ -84,7 +82,7 @@ async def load_filtered_messages(channel_username, offset_id, count, filter_vali
 
         # increment cycle values
         offset_id = last_loaded_message.id
-        time.sleep(0.3)  # seconds
+        time.sleep(0.5)  # seconds
 
     valid_messages = valid_messages[:count]
     print(

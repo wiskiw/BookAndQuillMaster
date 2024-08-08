@@ -1,0 +1,5 @@
+{{$new_page}} §c§lэммм...§r
+
+{{content}}
+
+                     §c§lче?§r
