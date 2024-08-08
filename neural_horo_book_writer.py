@@ -121,6 +121,7 @@ async def __main__(cmd_args):
     destination_file_name = f"neural_horo_{arg_message_id}_{arg_week_date}.json"
     destination_file_path = f"{src_dir}/{destination_file_name}"
     write_json(destination_file_path, book_formatter.to_json())
+    write_file('./debug/book_pretty.txt', book_formatter.to_pretty_text())
     print(f"Written a book with {len(book.get_pages())} page(s)")
 
     move_to_bookcopy_dir(destination_file_path, destination_file_name)

@@ -1,4 +1,3 @@
-import re
 from enum import Enum
 from typing import List, Union
 from abc import ABC, abstractmethod
@@ -22,12 +21,11 @@ class TextUnit(ABC):
         if format_flags is None:
             format_flags = []
 
-        self.__raw_text: str = raw_text
         self.__format_flags: list[FormatFlag] = format_flags
         self.__sub_units: list[TextUnit] = self._create_sub_units(raw_text=raw_text)
 
     def __str__(self):
-        return f"{type(self).__name__}({self.__sub_units if self.__sub_units else self.__raw_text})"
+        return f"{type(self).__name__}({self.__sub_units if self.__sub_units else self.get_raw_text()})"
 
     def __repr__(self):
         return str(self)
@@ -40,7 +38,9 @@ class TextUnit(ABC):
         return self.__sub_units
 
     def get_raw_text(self) -> str:
-        return self.__raw_text
+        sub_unit_text_list = list(map(lambda unit: unit.get_raw_text(), self.__sub_units))
+        merged_sub_unit_text = ''.join(sub_unit_text_list)
+        return merged_sub_unit_text
 
     def get_format_flags(self) -> list[FormatFlag]:
         return self.__format_flags

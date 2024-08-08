@@ -18,7 +18,7 @@ class TextParagraphUnit(TextUnit):
 
     def _create_sub_units(self, raw_text: str) -> list['TextUnit']:
         # sentences selector
-        split_regex = r'([^.!?]*(?:\.\.\.|[.!?]|)+)'
+        split_regex = r'([^.!?]+(?:\.\.\.|[.!?])*|(?:\.\.\.|[.!?])+)'
         sentences = re.findall(split_regex, raw_text)
         sentences = map_indexed(self.__map_sub_unit, sentences)
         return sentences

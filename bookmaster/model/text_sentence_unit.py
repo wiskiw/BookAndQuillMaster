@@ -39,27 +39,3 @@ class TextSentenceUnit(TextUnit):
             raw_text=value,
             format_flags=parent_format_flags,
         )
-
-    def _create_sub_unit_flags(self, sub_index: int, sub_text: str) -> list[FormatFlag]:
-        format_flags = []
-        first_sub_unit = sub_index == 0
-
-        if first_sub_unit and self.has_format_flag(FormatFlag.START_OF_PARAGRAPH):
-            format_flags.append(FormatFlag.START_OF_PARAGRAPH)
-
-        if first_sub_unit and self.has_format_flag(FormatFlag.START_OF_SENTENCE):
-            format_flags.append(FormatFlag.START_OF_SENTENCE)
-
-        self_has_new_page_flag = self.has_format_flag(FormatFlag.REQUESTED_NEW_PAGE)
-        sub_text_has_tag_flag = sub_text.strip().startswith(FORMAT_FLAG_TAGS[FormatFlag.REQUESTED_NEW_PAGE])
-        if (first_sub_unit and self_has_new_page_flag) or sub_text_has_tag_flag:
-            format_flags.append(FormatFlag.REQUESTED_NEW_PAGE)
-
-        return format_flags
-
-    def _remove_flag_tags_from_sub_text(self, flags: list[FormatFlag], sub_text: str) -> str:
-        if FormatFlag.REQUESTED_NEW_PAGE in flags:
-            flag_tag_new_page = FORMAT_FLAG_TAGS[FormatFlag.REQUESTED_NEW_PAGE]
-            sub_text = sub_text.replace(flag_tag_new_page, '')
-
-        return sub_text

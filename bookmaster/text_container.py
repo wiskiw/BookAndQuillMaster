@@ -12,34 +12,21 @@ class McLine:
     def __init__(self, ruler: McCharRuler, writing_config: BookWritingConfig):
         super().__init__()
 
-        self.__text = ""
+        self.__text_units = []
         self.__writing_config = writing_config
         self.__max_width_px = 114
         self.__ruler = ruler
 
     def __can_append(self, text_unit: TextUnit) -> bool:
         # use temporary object to check if text will fit after merging
-        temp_mc_line = copy.deepcopy(self)
-        temp_mc_line.__append(text_unit)
-        merged_text_width_px = self.__ruler.get_width(temp_mc_line.get_text())
+        temp_line = copy.deepcopy(self)
+        temp_line.__append(text_unit)
+        merged_text_width_px = self.__ruler.get_width_of_text_units(temp_line.get_text_units())
 
         return merged_text_width_px <= self.__max_width_px
 
     def __append(self, text_unit: TextUnit):
-        empty_line = len(self.__text) == 0
-        start_of_paragraph = text_unit.has_format_flag(FormatFlag.START_OF_PARAGRAPH)
-
-        if empty_line:
-            if not start_of_paragraph:
-                # trip spacing at the beginning of a text unit:
-                # - current line is empty
-                # and
-                # - text unit is not a start of a paragraph
-                self.__text = text_unit.get_raw_text().lstrip()
-            else:
-                self.__text = text_unit.get_raw_text()
-        else:
-            self.__text = ''.join([self.__text, text_unit.get_raw_text()])
+        self.__text_units.append(text_unit)
 
     def try_append(self, text_unit: TextUnit) -> bool:
         if self.__can_append(text_unit=text_unit):
@@ -49,8 +36,23 @@ class McLine:
             return False
 
     def get_text(self) -> str:
-        # ignoring right spacings when returning line text
-        return self.__text.rstrip()
+        if len(self.__text_units) == 0:
+            return ""
+
+        # ignoring right spacings
+        unit_text_list = list(map(lambda unit: unit.get_raw_text(), self.__text_units))
+        line_text = ''.join(unit_text_list).rstrip()
+
+        first_unit = self.__text_units[0]
+        start_of_paragraph = first_unit.has_format_flag(FormatFlag.START_OF_PARAGRAPH)
+        if not start_of_paragraph:
+            # ignoring left spacings it the line is not beginning of paragraph
+            line_text = line_text.lstrip()
+
+        return line_text
+
+    def get_text_units(self) -> list[TextUnit]:
+        return self.__text_units
 
 
 class McPage:

@@ -1,5 +1,7 @@
 import re
 
+from bookmaster.model.text_unit import TextUnit
+
 
 class McCharRuler:
     colors_codes = {
@@ -30,6 +32,8 @@ class McCharRuler:
         "§r": "reset",
     }
 
+    between_chars_width = 1
+
     char_to_width_dict: dict[str, int]
 
     def __init__(self, char_width_dict_file: str):
@@ -43,15 +47,28 @@ class McCharRuler:
             return 0
 
         text_width = 0
-        between_chars_width = 1
 
         for char in clean_text:
             if char not in self.char_to_width_dict:
                 raise Exception(f"Width is missing for character '{char}'")
 
             char_width = self.char_to_width_dict[char]
-            text_width += char_width + between_chars_width
-        return text_width - between_chars_width
+            text_width += char_width
+
+        all_spaces_width = max(len(clean_text) - 1, 0) * self.between_chars_width
+        return text_width + all_spaces_width
+
+    def get_width_of_text_unit(self, text_unit: TextUnit) -> int:
+        return self.get_width(text=text_unit.get_raw_text())
+
+    def get_width_of_text_units(self, text_unit_list: list[TextUnit]) -> int:
+        all_units_width = 0
+        for text_unit in text_unit_list:
+            unit_width = self.get_width_of_text_unit(text_unit=text_unit)
+            all_units_width += unit_width
+
+        all_spaces_width = max(len(text_unit_list) - 1, 0) * self.between_chars_width
+        return all_units_width + all_spaces_width
 
     def __remote_codes(self, text: str) -> str:
         clean_text = text
