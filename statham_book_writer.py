@@ -125,6 +125,7 @@ async def __main__(cmd_args):
 
     # creating a book object
     book = create_book(raw_content=raw_content)
+    book.set_title(title=f'Дж.Стетхем №4 {arg_episode}')
 
     # saving json book
     book_formatter = McBookFormatter(book)

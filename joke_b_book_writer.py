@@ -19,7 +19,7 @@ channel_username = '@baneksru'
 
 min_reactions_count = 400
 max_pages_per_joke = 2
-last_page_min_lines = 2
+last_page_min_lines = 3
 
 ruler = McCharRuler(char_width_dict_file='bookmaster/char_width.txt')
 
@@ -42,7 +42,8 @@ def is_message_valid(message) -> bool:
     reactions_counter = get_message_reactions_count(message)
     has_one_link = message.entities is None or len(message.entities) == 1
     has_enough_reactions = reactions_counter >= min_reactions_count
-    if not has_enough_reactions or message.message is None or not has_one_link:
+    has_no_replies = message.reply_markup is None
+    if not has_enough_reactions or message.message is None or not has_one_link or not has_no_replies:
         return False
 
     raw_joke_template = read_raw_joke_template()
@@ -136,6 +137,7 @@ async def __main__(cmd_args):
 
     # creating a book object
     book = create_book(raw_content=raw_content)
+    book.set_title(title=f'Анекдоты №{arg_episode}')
 
     # saving json book
     book_formatter = McBookFormatter(book)
