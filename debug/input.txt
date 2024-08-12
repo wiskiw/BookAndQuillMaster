@@ -1,13 +1,7 @@
-Приехал,§e§e§e§e§e§e§e§e§e§e значит, мужик в тайгу — лес валить.
-Месяц валит, два, три… И захотелось ему женщину. Приходит он в один из посёлков, заходит в избу, а там мужик сидит.
-— Привет.
-— Привет.
-— Слушай, я тут, вобщем, по женщине соскучился очень. Как тут у вас с женщинами?
-— Да ты чё, мужик, какие в тайге женщины… Но есть у нас Валентин Петрович!
-— Какой к чёрту Валентин Петрович!!! Я не гомосек тебе какой–нибудь!
-И ушёл.
-{{$new_page}}Через какое–то время не выдержал и пришёл обратно.
-— Ладно, давай своего Валентина Петровича. Только так, чтоб об этом знали только три человека — я, ты и Валентин Петрович!
-— Нет, три не получится — нужно семь.
-— Зачем еще четыре?!
-— А чтоб Валентина Петровича держали, а то он у нас ох как эти дела не любит!
+Hi
+This text represents raw string input that obviously does not fit into a single line of Minecraft Book. But with the help of the python script this text can be formatted in a way to fit. The script will split text into lines and pages keeping the paragraphs and spaces untouched. 
+Let's make these sentences a new paragraph.
+       …and this paragraph starts with some spaces. 
+The text arrangement logic supports §9default§r §oMinecraft§r §n§cformatting§r attributes, beside the BOLD tag. But all of them will stay in the output text.
+With the help of extra tags you can apply specific styling and arrangement to specific parts of the text. For example: {{$new_page}} This text will always start with a new page.
+{{$new_page}}The script output can be founded in §adebug§r folder
