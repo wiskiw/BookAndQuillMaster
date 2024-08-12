@@ -194,3 +194,6 @@ debug/book_pretty.txt
 debug/text_units.json5
 
 raw_content.txt
+
+# macOS:
+.DS_Store
