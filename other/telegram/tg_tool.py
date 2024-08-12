@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 import time
 from dataclasses import dataclass
-
 from telethon import TelegramClient
-
 from other.telegram.tg_credits import API_ID, API_HASH
+
+# Create a new file called 'tg_credits.py' next to this
+# put the following inside:
+# API_ID = you_key
+# API_HASH = 'your_hash'
 
 client = TelegramClient('telegram', API_ID, API_HASH)
 
@@ -52,7 +55,8 @@ async def load_messages_with_details(channel_username, offset_id, limit):
     return messages
 
 
-async def load_filtered_messages(channel_username, offset_id, count, filter_valid, requrest_size:int = 20) -> 'RangedMessages':
+async def load_filtered_messages(channel_username, offset_id, count, filter_valid,
+                                 requrest_size: int = 20) -> 'RangedMessages':
     # Get the channel entity
     await client.start()
     channel = await client.get_entity(channel_username)
