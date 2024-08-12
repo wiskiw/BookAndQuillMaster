@@ -15,7 +15,10 @@ from transliterate import translit
 import asyncio
 import sys
 
-# python3 che_book_writer.py первый 20911 16
+# Run command with arguments example:
+# python3 joke_b.py <episode_name> <last_message_id> <number of messages>
+# python3 che_book_writer.py первый 20472 16
+
 channel_username = '@jqofa'
 src_dir = 'content/che'
 

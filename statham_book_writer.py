@@ -12,6 +12,10 @@ from emoji import distinct_emoji_list
 import asyncio
 import sys
 
+# Run command with arguments example:
+# python3 statham_book_writer.py <episode> <last_message_id> <number_of_messages>
+# python3 statham_book_writer.py 0 5900 25
+
 channel_username = '@statham_jason'
 src_dir = 'content/statham'
 

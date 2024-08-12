@@ -12,7 +12,9 @@ from emoji import distinct_emoji_list
 import asyncio
 import sys
 
-# python3 joke_b.py 0 3200 27 
+# Run command with arguments example:
+# python3 joke_b.py <episode> <last_message_id> <number of messages>
+# python3 joke_b.py 0 3200 27
 
 src_dir = 'content/joke_b'
 channel_username = '@baneksru'

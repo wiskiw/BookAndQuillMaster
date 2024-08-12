@@ -13,6 +13,11 @@ from other.telegram.tg_tool import *
 import asyncio
 import sys
 
+# Run command with arguments example:
+# python3 neural_horo_book_writer.py <message_id> <week_date>
+# python3 neural_horo_book_writer.py 1855 01.01.2001
+
+
 src_dir = 'content/neural_horo'
 channel_username = '@neural_horo'
 char_width_dict_file = 'bookmaster/char_width.txt'
