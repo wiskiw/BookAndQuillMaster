@@ -11,6 +11,7 @@ from other.telegram.tg_tool import *
 from emoji import distinct_emoji_list
 import asyncio
 import sys
+import arrow
 
 # Run command with arguments example:
 # python3 statham_book_writer.py <episode> <last_message_id> <number_of_messages>
@@ -121,6 +122,7 @@ async def __main__(cmd_args):
     args_dictionary = {
         'episode': arg_episode,
         'quite_raw_content_list': '\n'.join(build_raw_content_list(ranged_messages.messages)),
+        'date': arrow.now().shift(days=-1).format('DD.MM.YYYY'),
     }
 
     # create raw content
@@ -129,7 +131,7 @@ async def __main__(cmd_args):
 
     # creating a book object
     book = create_book(raw_content=raw_content)
-    book.set_title(title=f'Дж.Стетхем №{arg_episode}')
+    book.set_title(title=f'Цитаты Дж.Стетхема №{arg_episode}')
 
     # saving json book
     book_formatter = McBookFormatter(book)
