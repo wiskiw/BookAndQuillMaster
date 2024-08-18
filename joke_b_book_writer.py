@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import arrow
+
 from bookmaster.book_formatter import McBookFormatter
 from bookmaster.book_writer import BookWriter
 from bookmaster.character_ruler import McCharRuler
@@ -13,8 +15,8 @@ import asyncio
 import sys
 
 # Run command with arguments example:
-# python3 joke_b.py <episode> <last_message_id> <number of messages>
-# python3 joke_b.py 0 3200 27
+# python3 joke_b_book_writer.py <episode> <last_message_id> <number of messages>
+# python3 joke_b_book_writer.py 4 2544 25
 
 src_dir = 'content/joke_b'
 channel_username = '@baneksru'
@@ -41,6 +43,9 @@ def get_message_reactions_count(message):
 
 
 def is_message_valid(message) -> bool:
+    if message.message is None:
+        return False
+
     reactions_counter = get_message_reactions_count(message)
     has_one_link = message.entities is None or len(message.entities) == 1
     has_enough_reactions = reactions_counter >= min_reactions_count
@@ -131,6 +136,7 @@ async def __main__(cmd_args):
     args_dictionary = {
         'episode': arg_episode,
         'joke_raw_content_list': '\n'.join(build_raw_content_list(ranged_messages.messages)),
+        'date': arrow.now().shift(days=-3).format('DD.MM.YYYY'),
     }
 
     # create raw content
@@ -139,7 +145,7 @@ async def __main__(cmd_args):
 
     # creating a book object
     book = create_book(raw_content=raw_content)
-    book.set_title(title=f'Анекдоты №{arg_episode}')
+    book.set_title(title=f'Анекдоты для выживания №{arg_episode}')
 
     # saving json book
     book_formatter = McBookFormatter(book)
