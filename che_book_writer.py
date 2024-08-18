@@ -17,7 +17,7 @@ import sys
 
 # Run command with arguments example:
 # python3 joke_b.py <episode_name> <last_message_id> <number of messages>
-# python3 che_book_writer.py первый 20472 16
+# python3 che_book_writer.py второй 20470 16
 
 channel_username = '@jqofa'
 src_dir = 'content/che'
@@ -150,7 +150,7 @@ async def __main__(cmd_args):
         print(f"ERROR unable to create book")
         return
 
-    book.set_title(title=f'ЧЕ? - {arg_episode_name}')
+    book.set_title(title=f'ЧЕ? {arg_episode_name}')
 
     # saving json book
     book_formatter = McBookFormatter(book)
