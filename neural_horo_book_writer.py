@@ -15,7 +15,7 @@ import sys
 
 # Run command with arguments example:
 # python3 neural_horo_book_writer.py <message_id> <week_date>
-# python3 neural_horo_book_writer.py 1855 01.01.2001
+# python3 neural_horo_book_writer.py 1852 19.08.2024
 
 
 src_dir = 'content/neural_horo'
@@ -120,7 +120,7 @@ async def __main__(cmd_args):
 
     # creating a book object
     book = create_book(raw_content=raw_content)
-    book.set_title(title=f'Гороскоп {arg_week_date}')
+    book.set_title(title=f'Нейрогороскоп {arg_week_date}')
 
     # saving json book
     book_formatter = McBookFormatter(book)
