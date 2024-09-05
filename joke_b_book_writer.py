@@ -62,7 +62,11 @@ def is_message_valid(message) -> bool:
 
     root_unit = TextRootUnit(raw_joke_content)
     text_unit_reader = TextUnitReader(text_unit=root_unit)
-    joke_book = BookWriter(reader=text_unit_reader, ruler=ruler).write()
+
+    try:
+        joke_book = BookWriter(reader=text_unit_reader, ruler=ruler).write()
+    except ValueError:
+        return False
 
     fit_in_page_limit = len(joke_book.get_pages()) <= max_pages_per_joke
 
